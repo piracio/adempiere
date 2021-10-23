@@ -1,6 +1,6 @@
 @Title Build Adempiere Clean
 @Rem $Header: /cvsroot/adempiere/utils_dev/RUN_build.bat,v 1.22 2005/09/08 21:56:11 jjanke Exp $
-
+SET JAVA_HOME=C:\Progra~1\Java\jdk1.8.0_291
 @Rem Check java home
 @IF NOT EXIST "%JAVA_HOME%\bin" ECHO "** JAVA_HOME NOT found"
 @SET PATH="%JAVA_HOME%\bin";%PATH%
@@ -23,7 +23,6 @@
 
 @Echo Done ...
 @Pause
-@exit
 
 :ERROR
 @Color fc
