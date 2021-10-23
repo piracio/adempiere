@@ -24,7 +24,3 @@ SET JAVA_HOME=C:\Progra~1\Java\jdk1.8.0_291
 @Echo Done ...
 @Pause
 
-:ERROR
-@Color fc
-
-@Pause

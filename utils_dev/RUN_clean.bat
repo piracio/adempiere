@@ -14,6 +14,3 @@
 
 @echo Cleanup ...
 @"%JAVA_HOME%\bin\java" -classpath %ANT_CLASSPATH% -Dant.home="." %ANT_PROPERTIES% org.apache.tools.ant.Main clean
-
-@Pause
-@exit
