@@ -293,10 +293,13 @@
 				<patternset refid="manifest.exclude" />
 			</zipfileset>
 			<!-- C3P0 connection pool -->
-			<zipfileset src="lib/c3p0-0.9.1.2.jar">
+			<zipfileset src="lib/c3p0-0.9.5.5.jar">
 				<patternset refid="manifest.exclude" />
 			</zipfileset>
-			<zipfileset src="lib/c3p0-oracle-thin-extras-0.9.1.2.jar">
+			<zipfileset src="lib/c3p0-oracle-thin-extras-0.9.5.5.jar">
+				<patternset refid="manifest.exclude" />
+			</zipfileset>
+			<zipfileset src="lib/mchange-commons-java-0.2.19.jar">
 				<patternset refid="manifest.exclude" />
 			</zipfileset>
 			<!-- POI -->
@@ -464,10 +467,13 @@
 				<patternset refid="manifest.exclude" />
 			</zipfileset>
 			<!-- C3P0 connection pool -->
-			<zipfileset src="lib/c3p0-0.9.1.2.jar">
+			<zipfileset src="lib/c3p0-0.9.5.5.jar">
 				<patternset refid="manifest.exclude" />
 			</zipfileset>
-			<zipfileset src="lib/c3p0-oracle-thin-extras-0.9.1.2.jar">
+			<zipfileset src="lib/c3p0-oracle-thin-extras-0.9.5.5.jar">
+				<patternset refid="manifest.exclude" />
+			</zipfileset>
+			<zipfileset src="lib/mchange-commons-java-0.2.19.jar">
 				<patternset refid="manifest.exclude" />
 			</zipfileset>
 			<!-- POI -->
