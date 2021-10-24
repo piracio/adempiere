@@ -21,6 +21,8 @@
     -->
     <Connector port="@ADEMPIERE_WEB_PORT@" address="${jboss.bind.address}"    
          maxThreads="250" maxHttpHeaderSize="8192"
+         compression="on"
+         ompressableMimeType="text/html,text/xml,text/css,text/javascript, application/x-javascript,application/javascript"
          emptySessionPath="false" protocol="HTTP/1.1"
          enableLookups="false" redirectPort="@ADEMPIERE_SSL_PORT@" acceptCount="100"
          connectionTimeout="20000" disableUploadTimeout="true" />

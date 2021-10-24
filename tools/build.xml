@@ -138,13 +138,13 @@
 
 		<!-- Create oracle.jar file 	-->
 		<jar jarfile="${dist.dir}/oracle.jar" duplicate="preserve">
-			<zipfileset src="lib/ojdbc6.jar">
+			<zipfileset src="lib/ojdbc8.jar">
 				<patternset refid="manifest.exclude" />
 			</zipfileset>
 
 			<manifest>
 				<attribute name="Specification-Title" value="Oracle JDBC" />
-				<attribute name="Specification-Version" value="11g" />
+				<attribute name="Specification-Version" value="12.2.0.1" />
 				<attribute name="Specification-Vendor" value="Oracle" />
 				<attribute name="Implementation-Title" value="oracle ${env.ADEMPIERE_VERSION}" />
 				<attribute name="Implementation-Version" value="${env.ADEMPIERE_VERSION} ${DSTAMP}-${TSTAMP}" />
@@ -155,7 +155,7 @@
 
 		<!-- Create postgresql.jar file 	-->
 		<jar jarfile="${dist.dir}/postgresql.jar">
-			<zipfileset src="lib/postgresql.jar">
+			<zipfileset src="lib/postgresql-42.3.0.jar">
 				<patternset refid="manifest.exclude" />
 			</zipfileset>
 
