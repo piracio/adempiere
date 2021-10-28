@@ -503,9 +503,9 @@ public final class DisplayType
 			return "NUMBER";
 		if (displayType == DisplayType.Binary)
 			return "BLOB";
-		if (displayType == DisplayType.TextLong 
+		if (displayType == DisplayType.Memo || displayType == DisplayType.TextLong
 			|| (displayType == DisplayType.Text && fieldLength >= 4000))
-			return "CLOB";
+		return "CLOB";
 		if (displayType == DisplayType.YesNo)
 			return "CHAR(1)";
 		if (displayType == DisplayType.List) {
