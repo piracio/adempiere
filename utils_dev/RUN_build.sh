@@ -25,7 +25,7 @@ fi
 #classpath
 export ANT_CLASSPATH=$CLASSPATH:../tools/lib/ant.jar:../tools/lib/ant-launcher.jar:../tools/lib/ant-swing.jar:../tools/lib/ant-commons-net.jar:../tools/lib/commons-net.jar:$JAVA_HOME/lib/tools.jar
 
-export ANT_OPTS="-Xms128m -Xmx512m"
+export ANT_OPTS="-Xms1g -Xmx1g"
 
 echo Cleanup ...
 $JAVA_HOME/bin/java $ANT_OPTS -classpath $ANT_CLASSPATH -Dant.home="." org.apache.tools.ant.Main clean
