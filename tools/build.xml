@@ -155,7 +155,7 @@
 
 		<!-- Create postgresql.jar file 	-->
 		<jar jarfile="${dist.dir}/postgresql.jar">
-			<zipfileset src="lib/postgresql.jar">
+		        <zipfileset src="lib/${env.POSTGRESJAR}">
 				<patternset refid="manifest.exclude" />
 			</zipfileset>
 
