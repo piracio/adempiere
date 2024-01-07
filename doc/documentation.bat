@@ -11,7 +11,7 @@
 @Set CLASSPATH=%CLASSPATH%;..\lib\CSTools.jar;..\lib\jboss.jar;..\
 @Set CLASSPATH=%CLASSPATH%;..\tools\lib\j2ee.jar;..\tools\lib\junit.jar
 
-javadoc -sourcepath %1 -d %2 -use -author -breakiterator -version -link http://java.sun.com/j2se/1.5.0/docs/api -link http://java.sun.com/j2ee/1.4/docs/api -splitindex -windowtitle "Adempiere %ADEMPIERE_VERSION% API Documentation" -doctitle "Adempiere<sup>TM</sup> API Documentation" -header "<b>Adempiere %ADEMPIERE_VERSION%</b>" -bottom "Copyright (c) 1999-2004 ComPiere, Inc. - Author: Jorg Janke" -overview doc\overview.html %3 -J-Xmx180m @packages.txt
+javadoc -sourcepath %1 -d %2 -use -author -breakiterator -version -link https://docs.oracle.com/javase/1.5.0/docs/api/ -link https://docs.oracle.com/javase/1.5.0/docs/api/ -splitindex -windowtitle "Adempiere %ADEMPIERE_VERSION% API Documentation" -doctitle "Adempiere<sup>TM</sup> API Documentation" -header "<b>Adempiere %ADEMPIERE_VERSION%</b>" -bottom "Copyright (c) 1999-2004 ComPiere, Inc. - Author: Jorg Janke" -overview doc\overview.html %3 -J-Xmx180m @packages.txt
 
 
 

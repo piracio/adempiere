@@ -126,7 +126,7 @@ public class TopicExportProcessor implements IExportProcessor {
 		// Construct Transformer Factory and Transformer
         TransformerFactory tranFactory = TransformerFactory.newInstance();
         String jVersion = System.getProperty("java.version");
-		if (jVersion.startsWith("1.5.0"))
+		if (jVersion.startsWith("1.7.0"))
 			tranFactory.setAttribute("indent-number", Integer.valueOf(1));
         
         Transformer aTransformer = tranFactory.newTransformer();

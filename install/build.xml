@@ -61,7 +61,7 @@
   <!-- ======================================================= -->
   <target name="installCompile" depends="installInit">
 	<!-- compile the java code from ${src} into ${build.dir} -->
-	<javac target="1.6" srcdir="${src}" destdir="${compile.dir}" deprecation="on" debug="on">
+	  <javac target="${env.JTARGET}" srcdir="${src}" destdir="${compile.dir}" deprecation="on" debug="on">
 	  <classpath refid="project.class.path"/>
 	</javac>
 	<!-- copy all image & sound files from src to the build directory -->
@@ -253,16 +253,16 @@
 	   includes="Adempiere/**" />
 
 	<!-- Create Install TAR		-->
-  	<tar longfile="gnu" tarfile="${build.dir}/Adempiere_${env.ADEMPIERE_VERSION_FILE}.tar.gz"
+  	<!--tar longfile="gnu" tarfile="${build.dir}/Adempiere_${env.ADEMPIERE_VERSION_FILE}.tar.gz"
 	   basedir="${build.dir}"
   		includes="Adempiere/**"
-	  	compression="gzip" />
+	  	compression="gzip" /-->
 
 
 	<!-- Create Checksums		-->
-	<checksum file="${build.dir}/Adempiere_${env.ADEMPIERE_VERSION_FILE}.tar.gz"/>
-	<concat destfile="${build.dir}/Adempiere_${env.ADEMPIERE_VERSION_FILE}.tar.gz.MD5" append="yes"> *Adempiere_${env.ADEMPIERE_VERSION_FILE}.tar.gz</concat>
-	<!-- Test with md5sum -c Adempiere_251.zip.MD5	-->
+	<!--checksum file="${build.dir}/Adempiere_${env.ADEMPIERE_VERSION_FILE}.tar.gz"/>
+	<concat destfile="${build.dir}/Adempiere_${env.ADEMPIERE_VERSION_FILE}.tar.gz.MD5" append="yes"> *Adempiere_${env.ADEMPIERE_VERSION_FILE}.tar.gz</concat-->
+	
 	<checksum file="${build.dir}/Adempiere_${env.ADEMPIERE_VERSION_FILE}.zip"/>
 	<concat destfile="${build.dir}/Adempiere_${env.ADEMPIERE_VERSION_FILE}.zip.MD5" append="yes"> *Adempiere_${env.ADEMPIERE_VERSION_FILE}.zip</concat>
 

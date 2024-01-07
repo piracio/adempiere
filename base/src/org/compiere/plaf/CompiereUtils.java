@@ -38,9 +38,7 @@ import java.util.logging.Logger;
 
 import javax.swing.JComponent;
 
-import com.sun.image.codec.jpeg.JPEGCodec;
-import com.sun.image.codec.jpeg.JPEGImageDecoder;
-
+import javax.imageio.ImageIO;
 /**
  *  UI utilities
  *
@@ -424,8 +422,8 @@ public class CompiereUtils
 			try
 			{
 				in = url.openStream();
-				JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
-				image = decoder.decodeAsBufferedImage();
+				//JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
+				image = ImageIO.read(in);
 			}
 			catch (Exception e)
 			{

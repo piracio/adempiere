@@ -1,8 +1,7 @@
 CVS=cvs
 RM=rm
 CVSROOT=:pserver:anonymous@cvs.sourceforge.net:/cvsroot/compiere
-#JAVAHOME=c:\jdk1.5.0_01
-JAVAHOME=c:\j2sdk1.4.2_06
+JAVAHOME=c:\j2sdk1.7.0
 JAVAC=$(JAVAHOME)\bin\javac
 JAVA=$(JAVAHOME)\bin\java
 

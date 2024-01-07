@@ -193,7 +193,7 @@
       <doctitle><![CDATA[Compiere<sup>TM</sup> Looks API Documentation]]></doctitle>
       <header><![CDATA[<b>Compiere JasperReports Integration 1.0</b>]]></header>
       <bottom><![CDATA[<i>Copyright (c) 1999-2005 ComPiere, Inc. - Author: Ronan LE MEILLAT based on rus.jar</i>]]></bottom>
-      <link href="http://java.sun.com/j2se/1.5.0/docs/api"/>
+      <link href="https://docs.oracle.com/javase/7/docs/api/"/>
     </javadoc>
   </target>
 

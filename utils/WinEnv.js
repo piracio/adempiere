@@ -1,6 +1,6 @@
 // Usage:   WinEnv ADEMPIERE_HOME JAVA_HOME
-// Example: WinEnv C:\Adempiere C:\Program Files\Java\jdk1.5.0_05
-// Example: cscript WinEnv.js C:\Adempiere C:\Program Files\Java\jdk1.5.0_05
+// Example: WinEnv C:\Adempiere C:\Program Files\Java\jdk1.7.0
+// Example: cscript WinEnv.js C:\Adempiere C:\Program Files\Java\jdk1.7.0
 //
 // WinEnv.js - Set up Windows Environment
 
@@ -16,7 +16,7 @@ var SysEnv = Shell.Environment("SYSTEM");
 if (Args.length != 2)
 {
   WScript.Echo("Usage: cscript WinEnv.js ADEMPIERE_HOME JAVA_HOME"
-	+ "\nExample:\ncscript WinEnv.js C:\\Adempiere \"C:\\Program Files\\Java\\jdk1.5.0_05\"");
+	+ "\nExample:\ncscript WinEnv.js C:\\Adempiere \"C:\\Program Files\\Java\\jdk1.7.0\"");
   WScript.Quit (1);
 }
 

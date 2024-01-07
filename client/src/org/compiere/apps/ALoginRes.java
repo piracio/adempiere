@@ -22,7 +22,8 @@ import java.util.ListResourceBundle;
  *  Base Resource Bundle.
  *  If you translate it, make sure that you convert the file to ASCII via
  *  native2ascii 
- *  http://java.sun.com/j2se/1.5.0/docs/tooldocs/windows/native2ascii.html
+ *  https://docs.oracle.com/javase/1.5.0/docs/tooldocs/windows/native2ascii.html
+ *  NOTE: https://docs.oracle.com/en/java/javase/11/migrate/index.html#GUID-A3F99AB7-7425-4420-8EDE-E4237BC5FD7D
  *  The non ASCII characters need to be converted to unicode - e.g. \u00ab
  *  This makes it less readable in the source, but viewable for everyone
  *

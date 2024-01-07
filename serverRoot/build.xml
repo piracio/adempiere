@@ -63,7 +63,7 @@
 
     <!--	Compile all -->
     <javac
-      target="1.5" 
+      target="${env.JTARGET}" 
 	  destdir="${build.classes.dir}"
 	  debug="on"
 	  deprecation="off"

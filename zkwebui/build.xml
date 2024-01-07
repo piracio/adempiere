@@ -8,7 +8,7 @@
 	    This buildfile is used to build the Zk WebUI client.
   	</description>
 	<!-- set global properties for this build -->
-	<!--<property environment="env"/>-->
+        <!--property environment="env"/> -->
 	<property name="src.dir" value="${basedir}/WEB-INF/src"/>
 	<property name="classes.dir" value="${basedir}/WEB-INF/classes"/>
 	<property name="dist.dir" value="${basedir}/dist"/>
@@ -45,7 +45,7 @@
 
 	<target name="compile" depends="clean" description="Compile Java sources">
 	    <mkdir dir="${classes.dir}"/>
-	    <javac target="1.6" 
+	    <javac target="1.7" 
 	    	   srcdir="WEB-INF/src"
 	           destdir="${classes.dir}"
 	           debug="${compile.debug}"

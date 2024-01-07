@@ -101,10 +101,14 @@ public class Login
 	{
 		//	Java System version check
 		String jVersion = System.getProperty("java.version");
-		if (jVersion.startsWith("1.5.0"))
-			return true;
+		//HMA-ProLinux Removal of Java 6
+		//if (jVersion.startsWith("1.6.0"))
+		//	return true;
                 //vpj-cd e-evolution support to java 6
-                if (jVersion.startsWith("1.6.0"))
+                if (jVersion.startsWith("1.7.0"))
+			return true;
+		//HMA-ProLinux support to java 7 and 8 		
+                if (jVersion.startsWith("1.8.0"))
 			return true;
                 //end
 		//  Warning
@@ -118,7 +122,7 @@ public class Login
 		msg.append(System.getProperty("java.vm.name")).append(" - ").append(jVersion);
 		if (ok)
 			msg.append("(untested)");
-		msg.append("  <>  1.5.0");
+		msg.append("  <>  1.8.0");
 		//
 		if (isClient)
 			JOptionPane.showMessageDialog(null, msg.toString(),

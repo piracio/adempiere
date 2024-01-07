@@ -83,8 +83,8 @@ public class ConfigVMOpenJDK extends Config
 		System.setProperty(ConfigurationData.JAVA_HOME, javaHome.getAbsolutePath());
 		
 		//	Java Version
-		final String VERSION = "1.5.0";
-		final String VERSION2 = "1.6.0";
+		final String VERSION = "1.6.0";
+		final String VERSION2 = "1.7.0";
 		pass = false;
 		String jh = javaHome.getAbsolutePath();
 		if (jh.indexOf(VERSION) != -1)	//	file name has version = assuming OK

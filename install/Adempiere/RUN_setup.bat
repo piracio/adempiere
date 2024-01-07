@@ -7,9 +7,9 @@
 @Set JAVA=java
 @Echo JAVA_HOME is not set.  
 @Echo You may not be able to start the required Setup window !!
-@Echo Set JAVA_HOME to the directory of your local 1.5 JDK.
+@Echo Set JAVA_HOME to the directory of your local 1.7 JDK.
 @Echo If you experience problems, run utils/WinEnv.js
-@Echo Example: cscript utils\WinEnv.js C:\Adempiere "C:\Program Files\Java\jdk1.5.0_04"
+@Echo Example: cscript utils\WinEnv.js C:\Adempiere "C:\Program Files\Java\jdk1.7.0"
 goto START
 
 :JAVA_HOME_OK
