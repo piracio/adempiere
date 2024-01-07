@@ -7,7 +7,7 @@ The main idea is to allow old customers to utilize java 1.8 and move into new Ad
 ROAD MAP
 =======
 
-AD 360.1 (JAVA 1.8), secure libraries, new hikari pool.
+AD 360.1 (JAVA 1.8), secure libraries. [OK]
 
 AD 380.1 (JAVA 1.8), secure libraries, new hikari pool.
 
