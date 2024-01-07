@@ -28,7 +28,7 @@
         <webClassPathEntry>/tools/lib/barbecue-1.1.jar</webClassPathEntry>
         <webClassPathEntry>/tools/lib/bsh-2.0b5.jar</webClassPathEntry>
         <webClassPathEntry>/tools/lib/bsh-engine.jar</webClassPathEntry>
-        <webClassPathEntry>/tools/lib/c3p0-0.9.1.2.jar</webClassPathEntry>
+        <webClassPathEntry>/tools/lib/c3p0-0.9.5.5.jar</webClassPathEntry>
         <webClassPathEntry>/tools/lib/commons-net-1.4.0.jar</webClassPathEntry>
         <webClassPathEntry>/tools/lib/groovy-all-1.5.1.jar</webClassPathEntry>
         <webClassPathEntry>/tools/lib/groovy-engine.jar</webClassPathEntry>
@@ -46,9 +46,9 @@
         <webClassPathEntry>/tools/lib/looks-2.0.4.jar</webClassPathEntry>
         <webClassPathEntry>/tools/lib/mail.jar</webClassPathEntry>
         <webClassPathEntry>/tools/lib/ocrs12.jar</webClassPathEntry>
-        <webClassPathEntry>/tools/lib/ojdbc14.jar</webClassPathEntry>
+        <webClassPathEntry>/lib/oracle.jar</webClassPathEntry>
         <webClassPathEntry>/tools/lib/poi-2.0-final-20040126.jar</webClassPathEntry>
-        <webClassPathEntry>/tools/lib/postgresql.jar</webClassPathEntry>
+        <webClassPathEntry>/lib/postgresql.jar</webClassPathEntry>
         <webClassPathEntry>/tools/lib/script-api.jar</webClassPathEntry>
         <webClassPathEntry>/tools/lib/standard.jar</webClassPathEntry>
         <webClassPathEntry>/tools/lib/swingx-0.9.0.jar</webClassPathEntry>

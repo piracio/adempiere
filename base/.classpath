@@ -34,17 +34,17 @@
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/tools/lib/postgresql.jar">
+	<classpathentry kind="lib" path="/lib/postgresql.jar">
 		<attributes>
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/tools/lib/ojdbc6.jar">
+	<classpathentry kind="lib" path="/lib/oracle.jar">
 		<attributes>
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/tools/lib/c3p0-0.9.1.2.jar">
+	<classpathentry kind="lib" path="/tools/lib/c3p0-0.9.5.5.jar">
 		<attributes>
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
