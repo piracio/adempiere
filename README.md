@@ -9,10 +9,8 @@ ROAD MAP
 
 AD 360.1 (JAVA 1.8), secure libraries. [OK]
 
-AD 380.1 (JAVA 1.8), secure libraries, new hikari pool.
+**Compiled Version AD 360 with JDK8**:
+(https://www.dropbox.com/scl/fi/1v6j5kuygcc6b774up2a2/Adempiere_360LTS.zip?rlkey=njt3gz9p17a0dzb9mikzis4yj&dl=0)
+(https://www.dropbox.com/scl/fi/585kw2ywhebp0j1zykswo/Adempiere_360LTS.zip.MD5?rlkey=w1apolggajy3zs574wefsrlal&dl=0)
 
-AD 391.1 (Java 1.8), secure libraries, new hikari pool.
-
-AD 392.1 (Java 1.8), secure libraries, new hikari pool.
-
-AD 393.1 (Java 1.8), secure libraries, new hikari pool.
+Happy testing.
