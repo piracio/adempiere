@@ -99,20 +99,24 @@ public class Login
 	 */
 	public static boolean isJavaOK (boolean isClient)
 	{
+
+		boolean ok = false;
+		
 		//	Java System version check
 		String jVersion = System.getProperty("java.version");
 		//HMA-ProLinux Removal of Java 6
 		//if (jVersion.startsWith("1.6.0"))
 		//	return true;
                 //vpj-cd e-evolution support to java 6
-                if (jVersion.startsWith("1.7.0"))
-			return true;
+                //if (jVersion.startsWith("1.7.0"))
+		//	return true;
 		//HMA-ProLinux support to java 7 and 8 		
-                if (jVersion.startsWith("1.8.0"))
-			return true;
+                if (jVersion.startsWith("1.8.0") || jVersion.startsWith("1.7.0")) {
+			ok = true ; 
+			return ok;
+		}	
                 //end
 		//  Warning
-		boolean ok = false;
 	//	if (jVersion.startsWith("1.4")
 	//		|| jVersion.startsWith("1.5.1"))	//  later/earlier release
 	//		ok = true;
