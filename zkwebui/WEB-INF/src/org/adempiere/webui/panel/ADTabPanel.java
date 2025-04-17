@@ -32,7 +32,7 @@ import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Rows;
-import org.adempiere.webui.component.SimpleTreeModel;
+import org.adempiere.webui.component.MyDefaulTreeModel;
 import org.adempiere.webui.component.Tab;
 import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
@@ -55,9 +55,9 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
-import org.zkoss.zkex.zul.West;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.West;
 import org.zkoss.zul.*;
 import org.zkoss.zul.Panel;
 import org.zkoss.zul.Row;
@@ -990,7 +990,7 @@ public class ADTabPanel extends Div implements Evaluatee, EventListener, DataSta
 
     	else if (event.getTarget() == treePanel.getTree()) {
     		Treeitem item =  treePanel.getTree().getSelectedItem();
-    		navigateTo((SimpleTreeNode)item.getValue());
+    		navigateTo((DefaultTreeNode<Object>)item.getValue());
     	}
     }
 
@@ -1078,7 +1078,7 @@ public class ADTabPanel extends Div implements Evaluatee, EventListener, DataSta
     		editor.repaintComponent(isRow);
     }
 
-    private void navigateTo(SimpleTreeNode value) {
+    private void navigateTo(DefaultTreeNode value) {
     	MTreeNode treeNode = (MTreeNode) value.getData();
     	//  We Have a TreeNode
 		int nodeID = treeNode.getNode_ID();
@@ -1196,10 +1196,10 @@ public class ADTabPanel extends Div implements Evaluatee, EventListener, DataSta
     private void deleteNode(int recordId) {
 		if (recordId <= 0) return;
 
-		SimpleTreeModel model = (SimpleTreeModel) treePanel.getTree().getModel();
+		MyDefaulTreeModel model = (MyDefaulTreeModel)(TreeModel<?>) treePanel.getTree().getModel();
 
 		if (treePanel.getTree().getSelectedItem() != null) {
-			SimpleTreeNode treeNode = (SimpleTreeNode) treePanel.getTree().getSelectedItem().getValue();
+			DefaultTreeNode<Object> treeNode = (DefaultTreeNode<Object>)(TreeModel<?>) treePanel.getTree().getSelectedItem().getValue();
 			MTreeNode data = (MTreeNode) treeNode.getData();
 			if (data.getNode_ID() == recordId) {
 				model.removeNode(treeNode);
@@ -1207,7 +1207,7 @@ public class ADTabPanel extends Div implements Evaluatee, EventListener, DataSta
 			}
 		}
 
-		SimpleTreeNode treeNode = model.find(null, recordId);
+		DefaultTreeNode<Object> treeNode = model.find(null, recordId);
 		if (treeNode != null) {
 			model.removeNode(treeNode);
 		}
@@ -1220,14 +1220,14 @@ public class ADTabPanel extends Div implements Evaluatee, EventListener, DataSta
 			boolean summary = gridTab.getValueAsBoolean("IsSummary");
 			String imageIndicator = (String)gridTab.getValue("Action");  //  Menu - Action
 			//
-			SimpleTreeModel model = (SimpleTreeModel) treePanel.getTree().getModel();
-			SimpleTreeNode treeNode = model.getRoot();
+			MyDefaulTreeModel model = (MyDefaulTreeModel)(TreeModel<?>) treePanel.getTree().getModel();
+			DefaultTreeNode<Object> treeNode = model.getRoot();
 			MTreeNode root = (MTreeNode) treeNode.getData();
 			MTreeNode node = new MTreeNode (gridTab.getRecord_ID(), 0, name, description,
 					root.getNode_ID(), summary, imageIndicator, false, null);
-			SimpleTreeNode newNode = new SimpleTreeNode(node, new ArrayList<Object>());
+			DefaultTreeNode<Object> newNode = new DefaultTreeNode<Object>(node);
 			model.addNode(newNode);
-			int[] path = model.getPath(model.getRoot(), newNode);
+			int[] path = model.getPath(newNode);
 			Treeitem ti = treePanel.getTree().renderItemByPath(path);
 			treePanel.getTree().setSelectedItem(ti);
     	}
@@ -1237,15 +1237,15 @@ public class ADTabPanel extends Div implements Evaluatee, EventListener, DataSta
 		if (recordId <= 0) return;
 
 		if (treePanel.getTree().getSelectedItem() != null) {
-			SimpleTreeNode treeNode = (SimpleTreeNode) treePanel.getTree().getSelectedItem().getValue();
+			DefaultTreeNode<Object>  treeNode = (DefaultTreeNode<Object>) treePanel.getTree().getSelectedItem().getValue();
 			MTreeNode data = (MTreeNode) treeNode.getData();
 			if (data.getNode_ID() == recordId) return;
 		}
 
-		SimpleTreeModel model = (SimpleTreeModel) treePanel.getTree().getModel();
-		SimpleTreeNode treeNode = model.find(null, recordId);
+		MyDefaulTreeModel model = (MyDefaulTreeModel)(TreeModel<?>) treePanel.getTree().getModel();
+		DefaultTreeNode<Object> treeNode = model.find(null, recordId);
 		if (treeNode != null) {
-			int[] path = model.getPath(model.getRoot(), treeNode);
+			int[] path = model.getPath(treeNode);
 			Treeitem ti = treePanel.getTree().renderItemByPath(path);
 			treePanel.getTree().setSelectedItem(ti);
 		} else {
@@ -1669,7 +1669,7 @@ public class ADTabPanel extends Div implements Evaluatee, EventListener, DataSta
 
 		for (Object o : ((Row) row).getChildren()) {
 
-			if(o instanceof org.zkoss.zkex.zul.Borderlayout)
+			if(o instanceof org.zkoss.zul.Borderlayout)
 			{
 				return 0;
 			}

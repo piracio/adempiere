@@ -22,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
@@ -53,9 +54,9 @@ import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
-import org.zkoss.zkex.zul.North;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.North;
 
 /**
 *	Search Business Partner and return selection
@@ -859,6 +860,12 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		fieldPostal.setText("");
 		checkCustomer.setSelected(m_isSOMatch);  	//  Customers Only
 		checkAND.setSelected(true); 		//  Use AND
+	}
+
+	@Override
+	public String getSortDirection(Comparator arg0) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

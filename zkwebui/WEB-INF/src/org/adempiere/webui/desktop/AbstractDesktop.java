@@ -201,7 +201,7 @@ public abstract class AbstractDesktop extends AbstractUIPart implements IDesktop
 			{
 				win.doModal();
 			}
-			catch(InterruptedException e)
+			catch(Exception e)
 			{
 				
 			}

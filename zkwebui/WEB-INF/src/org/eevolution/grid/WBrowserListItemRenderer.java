@@ -169,7 +169,6 @@ public class WBrowserListItemRenderer implements ListitemRenderer, EventListener
 	}
 
 
-	@Override
 	public void render(Listitem item, Object data) throws Exception {
 		render((ListItem)item, data);
 	}
@@ -1113,6 +1112,12 @@ public class WBrowserListItemRenderer implements ListitemRenderer, EventListener
 			}
 		}
 
+	}
+
+	@Override
+	public void render(Listitem arg0, Object arg1, int arg2) throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 }
 

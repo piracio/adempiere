@@ -43,9 +43,9 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.event.KeyEvent;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
-import org.zkoss.zkex.zul.South;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.South;
 import org.zkoss.zul.Column;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Paging;
@@ -61,7 +61,7 @@ import org.zkoss.zul.event.ZulEvents;
  *    <li>[Bug Report] Quick Entry not working when the icon is pushed #4023 https://github.com/adempiere/adempiere/issues/4023</>
  *
  */
-public class GridPanel extends Borderlayout implements EventListener
+public class GridPanel extends Borderlayout implements EventListener<Event>
 {
 	/**
 	 * generated serial version ID

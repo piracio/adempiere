@@ -14,7 +14,7 @@ import org.compiere.util.Msg;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
-import org.zkoss.zkex.zul.Center;
+import org.zkoss.zul.Center;
 
 /**
  * This Component allows display the POS password Pin

@@ -20,6 +20,7 @@ package org.adempiere.webui.panel;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Comparator;
 
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Label;
@@ -361,5 +362,11 @@ public class InfoAssetPanel extends InfoPanel implements ValueChangeListener, Ev
 	{
 		return true;
 	} // hasZoom
+
+	@Override
+	public String getSortDirection(Comparator arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

@@ -19,9 +19,15 @@ import org.zkoss.zk.ui.Desktop;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.sys.IdGenerator;
 
+import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Desktop;
+import org.zkoss.zk.ui.Page;
+import org.zkoss.zk.ui.metainfo.ComponentInfo;
+import org.zkoss.zk.ui.sys.IdGenerator;
+
 public class SahiIdGenerator_v1 implements IdGenerator {
 
-	@Override
+
 	public String nextComponentUuid(Desktop desktop, Component comp) {
 
 		int     i = Integer.parseInt(desktop.getAttribute("Id_Num").toString());
@@ -59,6 +65,12 @@ public class SahiIdGenerator_v1 implements IdGenerator {
 
 	@Override
 	public String nextPageUuid(Page page) {
+		return null;
+	}
+
+	@Override
+	public String nextComponentUuid(Desktop arg0, Component arg1, ComponentInfo arg2) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 

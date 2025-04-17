@@ -60,11 +60,11 @@ import org.compiere.util.Util;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
-import org.zkoss.zkex.zul.East;
-import org.zkoss.zkex.zul.North;
-import org.zkoss.zkex.zul.South;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.East;
+import org.zkoss.zul.North;
+import org.zkoss.zul.South;
 import org.zkoss.zul.Separator;
 import org.zkoss.zul.Space;
 
@@ -438,7 +438,7 @@ public class WBankStatementMatch extends BankStatementMatchController
 			refresh();
 		} catch (Exception e) {
 			FDialog.error(getWindowNo(), "Error", e.getLocalizedMessage());
-			Clients.showBusy(null, false);
+			Clients.clearBusy();
 		} finally {
 			if(isFromStatement()) {
 				dispose();
@@ -454,11 +454,11 @@ public class WBankStatementMatch extends BankStatementMatchController
 		getParameters();
 		String message = validateParameters();
 		if(Util.isEmpty(message)) {
-			Clients.showBusy(null, true);
+			Clients.clearBusy();
 			loadPayments();
 			loadImportedPayments();
 			loadMatchedPayments();
-			Clients.showBusy(null, false);
+			Clients.clearBusy();
 		} else {
 			FDialog.error(getWindowNo(), getForm(), "ValidationError", Msg.parseTranslation(Env.getCtx(), message));
 		}

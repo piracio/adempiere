@@ -531,7 +531,7 @@ public class LoginPanel extends Window implements EventListener
 
             Locales.setThreadLocal(language.getLocale());
 
-            Clients.response("zkLocaleJavaScript", new AuScript(null, ZkFns.outLocaleJavaScript()));
+            Clients.evalJavaScript("zk.reload();");//Esto fuerza a ZK a recargar los recursos de localización 
             String timeoutText = getUpdateTimeoutTextScript();
             if (!Strings.isEmpty(timeoutText))
             	Clients.response("zkLocaleJavaScript2", new AuScript(null, timeoutText));

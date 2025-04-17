@@ -44,7 +44,7 @@ import org.compiere.apps.ConfirmPanel;
 import org.compiere.util.CLogger;
 import org.compiere.util.Msg;
 import org.zkoss.zk.ui.event.EventListener;
-import org.zkoss.zkex.zul.South;
+import org.zkoss.zul.South;
 
 /**
  * @author Mario Calderon, mario.calderon@westfalia-it.com, Systemhaus Westfalia, http://www.westfalia-it.com

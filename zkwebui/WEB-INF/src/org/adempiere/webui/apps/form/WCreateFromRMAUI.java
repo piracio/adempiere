@@ -40,8 +40,8 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
 
 /**
  *	@author Yamel Senih, ysenih@erpcya.com, ERPCyA http://www.erpcya.com

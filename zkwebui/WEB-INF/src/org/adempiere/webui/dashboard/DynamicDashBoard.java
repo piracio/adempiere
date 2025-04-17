@@ -90,7 +90,7 @@ public class DynamicDashBoard extends DashboardPanel implements EventListener
 	Vbox vbox = new Vbox();
 	Boolean displayZoomCol = Boolean.FALSE ;
 
-	public DynamicDashBoard() {
+	public DynamicDashBoard() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		super();
 		// initialize the context values
 		browseId = Env.getContextAsInt(ctx, "#AD_Browse_ID");
@@ -105,8 +105,11 @@ public class DynamicDashBoard extends DashboardPanel implements EventListener
 	/**
 	 * createView creates the dynamic dash board view based on configuration
 	 * values if configured, otherwise it creates dash board with default values
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 * @throws ClassNotFoundException 
 	 */
-	private void createView() {
+	private void createView() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		Columns columns = new Columns();
 		prepareSelectQuery();//prepares a select query. 
 

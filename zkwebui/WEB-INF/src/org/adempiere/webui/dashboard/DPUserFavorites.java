@@ -20,7 +20,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.ADTreeFavoriteOnDropListener;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Label;
-import org.adempiere.webui.component.SimpleFavoriteTreeModel;
+import org.adempiere.webui.component.MyDefaultTreeModelF;
 import org.adempiere.webui.panel.MenuPanel;
 import org.adempiere.webui.theme.ITheme;
 import org.adempiere.webui.util.TreeItemAction;
@@ -36,13 +36,13 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.event.MouseEvent;
 import org.zkoss.zul.Box;
+import org.zkoss.zul.DefaultTreeNode;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Image;
 import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Menupopup;
 import org.zkoss.zul.Panel;
 import org.zkoss.zul.Panelchildren;
-import org.zkoss.zul.SimpleTreeNode;
 import org.zkoss.zul.Toolbar;
 import org.zkoss.zul.Tree;
 import org.zkoss.zul.Treeitem;
@@ -77,7 +77,7 @@ public class DPUserFavorites extends DashboardPanel implements EventListener, Tr
 	private int						AD_User_ID;
 	private Div						hint = null;
 	private Image					trashCan = null;
-	private SimpleFavoriteTreeModel	tModel;
+	private MyDefaultTreeModelF	tModel;
 
 	/**
 	 * Standard constructor
@@ -121,7 +121,7 @@ public class DPUserFavorites extends DashboardPanel implements EventListener, Tr
 		trashCan = new Image(ITheme.DASHBOARD_DELETE_IMAGE);
 		favToolbar.appendChild(trashCan);
 		trashCan.setAlign("left");
-		trashCan.setDroppable(SimpleFavoriteTreeModel.USER_FAVORITE_DRAGGABLE_TYPE);
+		trashCan.setDroppable(MyDefaultTreeModelF.USER_FAVORITE_DRAGGABLE_TYPE);
 		trashCan.setStyle("margin: 5px;");
 		trashCan.setTooltiptext(Msg.getMsg(Env.getCtx(), "DPUserFavorites.trashcan.tooltip"));
 		trashCan.addEventListener(Events.ON_DROP, this);
@@ -131,12 +131,12 @@ public class DPUserFavorites extends DashboardPanel implements EventListener, Tr
 		// Limit the droppable items to main menu items 
 		// and items from the SimpleFavoriteTreeModel
 		favContent.setDroppable(MenuPanel.MENU_ITEM_DRAGGABLE_TYPE + "," 
-						+ SimpleFavoriteTreeModel.USER_FAVORITE_DRAGGABLE_TYPE);
+						+ MyDefaultTreeModelF.USER_FAVORITE_DRAGGABLE_TYPE);
 		favContent.addEventListener(Events.ON_DROP, this);
 		
 		this.setTooltiptext(Msg.getMsg(Env.getCtx(), "DPUserFavorites.tooltip"));
 
-		int childCount = ((SimpleFavoriteTreeModel) tree.getModel()).getRoot().getChildCount();
+		int childCount = ((MyDefaultTreeModelF) tree.getModel()).getRoot().getChildCount();
 		if (childCount == 0)  //Root node only. Add a hint to the user.
 		{
 			showHint();
@@ -249,7 +249,7 @@ public class DPUserFavorites extends DashboardPanel implements EventListener, Tr
 			tree.setClass("menu-tree");
 		}
 
-		tModel = SimpleFavoriteTreeModel.initADTree(tree, m_AD_FavTree_ID, 0);
+		tModel = MyDefaultTreeModelF.initADTree(tree, m_AD_FavTree_ID, 0);
 		tModel.addTreeDataListener(this);
 				
 		if (tree.getTreechildren() != null)
@@ -258,7 +258,7 @@ public class DPUserFavorites extends DashboardPanel implements EventListener, Tr
 
 				public void run(Treeitem treeItem)
 				{
-					SimpleTreeNode simpleTreeNode = (SimpleTreeNode) treeItem.getValue();
+					DefaultTreeNode simpleTreeNode = (DefaultTreeNode) treeItem.getValue();
 					MTreeNode mtn = (MTreeNode) simpleTreeNode.getData();
 					if (mtn.IsCollapsible())
 						treeItem.setOpen(false);
@@ -305,7 +305,7 @@ public class DPUserFavorites extends DashboardPanel implements EventListener, Tr
 				Menuitem menuItem = new Menuitem(Msg.getMsg(Env.getCtx(), ADTreeFavoriteOnDropListener.MENU_ITEM_ADD_FOLDER), "/images/dark/FolderAdd16.png");
 				menuItem.setValue(ADTreeFavoriteOnDropListener.MENU_ITEM_ADD_FOLDER);
 				menuItem.setParent(popup);
-				menuItem.addEventListener(Events.ON_CLICK, SimpleFavoriteTreeModel.listener.new AddFolderListener(tModel.getRoot()));
+				menuItem.addEventListener(Events.ON_CLICK, MyDefaultTreeModelF.listener.new AddFolderListener(tModel.getRoot()));
 
 				popup.setPage(hint.getPage());
 				popup.open(hint, "after_pointer");				
@@ -335,7 +335,7 @@ public class DPUserFavorites extends DashboardPanel implements EventListener, Tr
         	else if(comp.equals(trashCan))
         	{
         		
-    			SimpleTreeNode sourceNode = (SimpleTreeNode) src.getValue();
+        		DefaultTreeNode sourceNode = (DefaultTreeNode) src.getValue();
 				ADTreeFavoriteOnDropListener.deleteNodeMenu(sourceNode);
         		
         	}
@@ -381,7 +381,7 @@ public class DPUserFavorites extends DashboardPanel implements EventListener, Tr
 		if (event.getType() == TreeDataEvent.INTERVAL_ADDED 
 			 || event.getType() == TreeDataEvent.INTERVAL_REMOVED)
 		{
-			int childCount = ((SimpleFavoriteTreeModel) tree.getModel()).getRoot().getChildCount();
+			int childCount = ((MyDefaultTreeModelF) tree.getModel()).getRoot().getChildCount();
 			if (childCount == 0)  
 			{
 				// The tree is empty and won't occupy screen space so it can't serve as a drop target.

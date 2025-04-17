@@ -875,5 +875,11 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 			}
 		}
 	}
+
+	@Override
+	public void render(Row arg0, Object arg1, int arg2) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }

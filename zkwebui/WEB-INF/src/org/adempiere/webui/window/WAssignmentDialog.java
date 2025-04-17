@@ -222,7 +222,9 @@ public class WAssignmentDialog extends Window implements EventListener
 		//	Set Resource
 		int S_Resource_ID = m_mAssignment.getS_Resource_ID();
 		
-		for (ListItem item : fResource.getItems()) {
+		for (Object obj : fResource.getItems()){
+			if (!(obj instanceof ListItem)) continue;
+			 ListItem item = (ListItem) obj;
 			if ( (Integer)item.getValue() == S_Resource_ID) {
 				fResource.setSelectedItem(item);
 				break;

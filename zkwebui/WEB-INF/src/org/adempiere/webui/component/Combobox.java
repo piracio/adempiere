@@ -131,8 +131,8 @@ public class Combobox extends org.zkoss.zul.Combobox
     }
     
     /** Returns RS_NO_WIDTH|RS_NO_HEIGHT.
-	 */
+	 
 	protected int getRealStyleFlags() {
 		return super.getRealStyleFlags() & 0x0006;
-	}
+	}*/
 }

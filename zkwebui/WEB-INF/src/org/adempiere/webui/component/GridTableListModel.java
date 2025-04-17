@@ -26,13 +26,14 @@ import org.zkoss.zul.ListModel;
 import org.zkoss.zul.ListModelExt;
 import org.zkoss.zul.ListitemComparator;
 import org.zkoss.zul.event.ListDataEvent;
+import org.zkoss.zul.ext.Sortable;
 
 /**
  * 
  * @author Low Heng Sin
  *
  */
-public class GridTableListModel extends AbstractListModel implements TableModelListener, ListModelExt {
+public class GridTableListModel extends AbstractListModel<Object> implements TableModelListener, Sortable<Object> {
 	
 	/**
 	 * 
@@ -166,8 +167,7 @@ public class GridTableListModel extends AbstractListModel implements TableModelL
 	 * @param ascending
 	 * @see ListModelExt#sort(Comparator, boolean) 
 	 */
-	@SuppressWarnings("unchecked")
-	public void sort(Comparator cmpr, boolean ascending) {
+	public void sort(Comparator<Object> cmpr, boolean ascending) {
 		//use default zk comparator
 		if (cmpr instanceof ListitemComparator) {			
 			ListitemComparator lic = (ListitemComparator) cmpr;
@@ -222,6 +222,9 @@ public class GridTableListModel extends AbstractListModel implements TableModelL
 	 */
 	public void setEditing(boolean b) {
 		editing = b;
+	}
+	public String getSortDirection(Comparator<Object> cmpr) {
+		return "natural";
 	}
 
 }

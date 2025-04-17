@@ -105,9 +105,9 @@ public class Listbox extends org.zkoss.zul.Listbox implements EventListener
     }
     
     @SuppressWarnings("unchecked")
-    public List<ListItem> getItems()
+    public List getItems()
     {
-        return (List<ListItem>)super.getItems();
+        return (List)super.getItems();
     }
     
     /** 
@@ -349,7 +349,8 @@ public class Listbox extends org.zkoss.zul.Listbox implements EventListener
 	@Override
 	public String toString() {
 		StringBuffer items = new StringBuffer("[");
-		for (ListItem item : getItems()) {
+		for (Object obj : getItems()) {
+			ListItem item = (ListItem) obj;
 			if (items.length() > 1)
 				items.append(", ");
 			items.append(item.toString());
@@ -357,6 +358,7 @@ public class Listbox extends org.zkoss.zul.Listbox implements EventListener
 		items.append("]");
 		return items.toString();
 	}
+	
 	
 	/**
 	 * Set the old value of the field.  For use in future comparisons.

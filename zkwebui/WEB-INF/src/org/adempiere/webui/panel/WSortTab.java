@@ -438,7 +438,12 @@ public class WSortTab extends Panel implements IADTabPanel {
 		}
 			
 		log.fine("");
-		String info = sortTabController.saveData(noModel.getElements(), yesModel.getElements());
+		String info = sortTabController.saveData(
+			    (List<ListElement>) noModel.getElements(), 
+			    (List<ListElement>) yesModel.getElements()
+			);
+
+		//String info = sortTabController.saveData(noModel.getElements(), yesModel.getElements());
 		//
 		if (info == null) {
 			setIsChanged(false);

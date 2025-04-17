@@ -49,9 +49,10 @@
 		comet - org.zkoss.zkmax.ui.comet.CometServerPush ( enterprise edition only )  
 	-->
 	<device-config>
- 		<device-type>ajax</device-type>
-		<server-push-class>org.zkoss.zkmax.ui.comet.CometServerPush</server-push-class>
+    	<device-type>ajax</device-type>
+    	<server-push-class>org.zkoss.zk.ui.impl.PollingServerPush</server-push-class>
 	</device-config>
+	
 
 	<library-property>
 		<name>org.zkoss.zul.theme.fontSizeM

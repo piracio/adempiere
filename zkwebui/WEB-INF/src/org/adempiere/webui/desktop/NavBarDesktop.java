@@ -59,12 +59,12 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.event.OpenEvent;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
-import org.zkoss.zkex.zul.North;
-import org.zkoss.zkex.zul.West;
-import org.zkoss.zkmax.zul.Portalchildren;
-import org.zkoss.zkmax.zul.Portallayout;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.North;
+import org.zkoss.zul.West;
+//import org.zkoss.zkmax.zul.Portalchildren;
+//import org.zkoss.zkmax.zul.Portallayout;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Html;
 import org.zkoss.zul.Panel;
@@ -94,7 +94,7 @@ public class NavBarDesktop extends TabbedDesktop implements MenuListener, Serial
 
 	private DashboardRunnable dashboardRunnable;
 
-	private Portallayout portalLayout;
+	private Div portalLayout;
 
 	private Accordion navigationPanel;
 
@@ -204,15 +204,13 @@ public class NavBarDesktop extends TabbedDesktop implements MenuListener, Serial
 	{
         Tabpanel homeTab = new Tabpanel();
         windowContainer.addWindow(homeTab, Msg.getMsg(Env.getCtx(), "Home").replaceAll("&", ""), false);
-
-		portalLayout = new Portallayout();
-        portalLayout.setWidth("100%");
-        portalLayout.setHeight("100%");
-        portalLayout.setStyle("position: absolute; overflow: auto");
-        homeTab.appendChild(portalLayout);
+        portalLayout = new Div();
+	    portalLayout.setStyle("display: flex; flex-wrap: nowrap; width: 100%; height: 100%; overflow: auto; gap: 10px;");
+	    homeTab.appendChild(portalLayout);
 
         // Dashboard content
-        Portalchildren portalchildren = null;
+        //Portalchildren portalchildren = null;
+	    Div currentColumn = null;
         int currentColumnNo = 0;
 
         String sql = "SELECT COUNT(DISTINCT COLUMNNO) "
@@ -244,13 +242,12 @@ public class NavBarDesktop extends TabbedDesktop implements MenuListener, Serial
 			while (rs.next())
 			{
 	        	int columnNo = rs.getInt(X_PA_DashboardContent.COLUMNNAME_ColumnNo);
-	        	if(portalchildren == null || currentColumnNo != columnNo)
+	        	if( currentColumn== null || currentColumnNo != columnNo)
 	        	{
-	        		portalchildren = new Portalchildren();
-	                portalLayout.appendChild(portalchildren);
-	                portalchildren.setWidth(width + "%");
-	                portalchildren.setStyle("padding: 5px");
-
+	        		currentColumn = new Div();
+	                currentColumn.setStyle("flex: 0 0 " + "%; padding: 5px; box-sizing: border-box;");
+	                portalLayout.appendChild(currentColumn);
+	                currentColumnNo = columnNo;
 	                currentColumnNo = columnNo;
 	        	}
 
@@ -266,7 +263,7 @@ public class NavBarDesktop extends TabbedDesktop implements MenuListener, Serial
             	panel.setCollapsible(collapsible.equals("Y"));
 
 	        	panel.setBorder("normal");
-	        	portalchildren.appendChild(panel);
+	        	currentColumn.appendChild(panel);
 	            Panelchildren content = new Panelchildren();
 	            panel.appendChild(content);
 

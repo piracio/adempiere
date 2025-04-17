@@ -13,11 +13,12 @@
  *****************************************************************************/
 package org.adempiere.webui.component;
 
+import java.util.Map;
+
 import org.adempiere.webui.event.DrillEvent;
 import org.compiere.model.MQuery;
-import org.zkoss.lang.Objects;
 import org.zkoss.zk.au.AuRequest;
-import org.zkoss.zk.au.Command;
+import org.zkoss.zk.au.AuService;
 import org.zkoss.zk.mesg.MZk;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.UiException;
@@ -28,31 +29,34 @@ import org.zkoss.zk.ui.event.Events;
  * @author hengsin
  *
  */
-public class DrillCommand extends Command {
+public class DrillCommand implements AuService {
 
-	public DrillCommand(String id, int flags) {
-		super(id, flags);
-	}
+    @Override
+    public boolean service(AuRequest request, boolean everError) {
+        String cmd = request.getCommand();
 
-	@Override
-	protected void process(AuRequest request) {
-		final String[] data = request.getData();
+        if (!("onDrillAcross".equals(cmd) || "onDrillDown".equals(cmd))) {
+            return false;
+        }
 
-		final Component comp = request.getComponent();
-		if (comp == null)
+        Component comp = request.getComponent();
+        final Map<?, ?> data = request.getData();
+        if (comp == null)
 			throw new UiException(MZk.ILLEGAL_REQUEST_COMPONENT_REQUIRED, this);
-		
-		if (data == null || data.length < 2)
-			throw new UiException(MZk.ILLEGAL_REQUEST_WRONG_DATA, new Object[] {
-					Objects.toString(data), this });
-		
-		String columnName = data[0];
-		String tableName = MQuery.getZoomTableName(columnName);
-		String code = data[1];
-		//
-		MQuery query = new MQuery(tableName);
-		query.addRestriction(columnName, MQuery.EQUAL, code);
 
-		Events.postEvent(new DrillEvent(getId(), comp, query));
-	}
+        if (comp == null || data == null || !data.containsKey("column") || !data.containsKey("value")) {
+            throw new UiException("Invalid AU request data for command: " + cmd);
+        }
+
+        String columnName = (String) data.get("column");
+        Object value = data.get("value");
+
+        String tableName = MQuery.getZoomTableName(columnName);
+
+        MQuery query = new MQuery(tableName);
+        query.addRestriction(columnName, MQuery.EQUAL, value);
+
+        Events.postEvent(new DrillEvent(cmd, comp, query));
+        return true;
+    }
 }

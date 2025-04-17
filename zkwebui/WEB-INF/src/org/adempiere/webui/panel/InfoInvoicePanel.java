@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.Comparator;
 import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
@@ -648,5 +649,11 @@ public class InfoInvoicePanel extends InfoPanel implements ValueChangeListener
 		{
 			Env.setContext(Env.getCtx(), p_WindowNo, Env.TAB_INFO, "C_InvoicePaySchedule_ID", C_InvoicePaySchedule_ID.toString());
 		}
+	}
+
+	@Override
+	public String getSortDirection(Comparator arg0) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

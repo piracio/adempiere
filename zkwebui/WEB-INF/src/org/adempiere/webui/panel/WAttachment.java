@@ -36,16 +36,15 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.util.media.Media;
-import org.zkoss.zk.au.AuScript;
 import org.zkoss.zk.au.out.AuEcho;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
-import org.zkoss.zkex.zul.North;
-import org.zkoss.zkex.zul.South;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.North;
+import org.zkoss.zul.South;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Fileupload;
@@ -58,8 +57,7 @@ import org.zkoss.zul.Timer;
  * @author Low Heng Sin
  *
  */
-@SuppressWarnings("deprecation")
-public class WAttachment extends Window implements EventListener
+public class WAttachment extends Window implements EventListener<Event>
 {
 	/**
 	 * 
@@ -145,7 +143,7 @@ public class WAttachment extends Window implements EventListener
 			displayData(0, false);
 			String script = "setTimeout(\"$e('"+ preview.getUuid() + "').src = $e('" +
 			preview.getUuid() + "').src\", 1000)";
-			Clients.response(new AuScript(null, script));
+			Clients.evalJavaScript(script);
 			
 			//enter modal
 			doModal();
@@ -468,7 +466,7 @@ public class WAttachment extends Window implements EventListener
 				return;
 			}
 		}
-		catch (InterruptedException e) 
+		catch (Exception e) 
 		{
 			log.log(Level.WARNING, e.getLocalizedMessage(), e);
 		}

@@ -62,10 +62,10 @@ import org.zkoss.zk.ui.SuspendNotAllowedException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
-import org.zkoss.zkex.zul.North;
-import org.zkoss.zkex.zul.South;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.North;
+import org.zkoss.zul.South;
 import org.zkoss.zul.Separator;
 import org.zkoss.zul.Space;
 
@@ -534,13 +534,9 @@ public class WPaySelect extends PaySelect
 				processModalDialog.doModal();
 			} catch (SuspendNotAllowedException e) {
 				log.log(Level.SEVERE, e.getLocalizedMessage(), e);
-			} catch (InterruptedException e) {
-				log.log(Level.SEVERE, e.getLocalizedMessage(), e);
 			}
 		}
-		else
-			processModalDialog.runProcess();
-	}   //  generatePaySelect
+	}//  generatePaySelect
 	
 	/**
 	 *  Lock User Interface
@@ -550,7 +546,7 @@ public class WPaySelect extends PaySelect
 	{
 		if (m_isLock) return;
 		m_isLock = true;
-		Clients.showBusy(null, true);
+		Clients.clearBusy();
 	}   //  lockUI
 
 	/**
@@ -562,7 +558,7 @@ public class WPaySelect extends PaySelect
 		if (!m_isLock) return;
 		m_isLock = false;
 		m_pi = pi;
-		Clients.showBusy(null, false);	
+		Clients.clearBusy();
 		
 		//TODO: The response returned is always Cancel
 //		if (!FDialog.ask(0, form, "VPaySelectPrint?", "(" + m_pi.getSummary() + ")"))

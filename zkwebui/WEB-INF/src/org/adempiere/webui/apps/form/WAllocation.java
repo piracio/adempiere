@@ -56,10 +56,10 @@ import org.compiere.util.TrxRunnable;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
-import org.zkoss.zkex.zul.North;
-import org.zkoss.zkex.zul.South;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.North;
+import org.zkoss.zul.South;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Separator;
 import org.zkoss.zul.Space;
@@ -451,7 +451,7 @@ public class WAllocation extends Allocation
 		if(m_isCalculating)
 			return;
 		m_isCalculating = true;
-		Clients.showBusy(null,true);
+		Clients.clearBusy();
 		
 		int row = e.getFirstRow();
 		int col = e.getColumn();
@@ -464,7 +464,7 @@ public class WAllocation extends Allocation
 
 		calculate();
 		
-		Clients.showBusy(null,false);
+		Clients.clearBusy();
 		m_isCalculating = false;
 	}   //  tableChanged
 
@@ -580,7 +580,7 @@ public class WAllocation extends Allocation
 	 */
 	private void loadBPartner()
 	{
-		Clients.showBusy(null,true);
+		Clients.clearBusy();
 		
 		//checkBPartner();
 		Vector<Vector<Object>> data = getPaymentData(multiCurrency.isSelected(), dateField.getValue(), paymentTable);
@@ -619,7 +619,7 @@ public class WAllocation extends Allocation
 		
 		//  Calculate Totals
 		calculate();
-		Clients.showBusy(null,false);
+		Clients.clearBusy();
 	}   //  loadBPartner
 	
 	public void calculate()

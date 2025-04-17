@@ -23,6 +23,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.logging.Level;
 
 import org.adempiere.webui.component.Label;
@@ -502,5 +503,11 @@ public class InfoGeneralPanel extends InfoPanel implements EventListener
 		txt3.set_oldValue();
 		txt4.set_oldValue();
 		return;
+	}
+
+	@Override
+	public String getSortDirection(Comparator arg0) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

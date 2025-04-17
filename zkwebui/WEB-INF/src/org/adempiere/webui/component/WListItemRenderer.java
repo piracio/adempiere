@@ -148,9 +148,10 @@ public class WListItemRenderer implements ListitemRenderer, EventListener, Listi
 	/* (non-Javadoc)
 	 * @see org.zkoss.zul.ListitemRenderer#render(org.zkoss.zul.Listitem, java.lang.Object)
 	 */
-	public void render(Listitem item, Object data) throws Exception
+	@Override
+	public void render(Listitem item, Object data, int index) throws Exception
 	{
-		render((ListItem)item, data);
+		render((ListItem)item, data,index);
 	}
 
 	/**
@@ -163,7 +164,7 @@ public class WListItemRenderer implements ListitemRenderer, EventListener, Listi
 	 * @throws Exception
 	 * @see {@link #render(Listitem, Object)}
 	 */
-	private void render(ListItem item, Object data)
+	private void render(ListItem item, Object data,int index)
 	{
 		Listcell listcell = null;
 		int colIndex = 0;
@@ -207,9 +208,12 @@ public class WListItemRenderer implements ListitemRenderer, EventListener, Listi
 			listcell = getCellComponent(table, field, rowIndex, colIndex);
 			listcell.setParent(item);
 			listcell.addEventListener(Events.ON_DOUBLE_CLICK, cellListener);
-			listcell.setAttribute("zk_component_ID", "ListItem_R" + rowIndex + "_C" + colIndex);
-
 			colIndex++;
+			if (m_tableColumns != null && m_tableColumns.size() == colIndex)
+				break;
+			//listcell.setAttribute("zk_component_ID", "ListItem_R" + rowIndex + "_C" + colIndex);
+
+
 		}
 
 		return;
@@ -950,6 +954,7 @@ public class WListItemRenderer implements ListitemRenderer, EventListener, Listi
 		}
 
 	}
+
 }
 
 

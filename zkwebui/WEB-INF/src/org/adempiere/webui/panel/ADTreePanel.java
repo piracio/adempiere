@@ -15,7 +15,7 @@ package org.adempiere.webui.panel;
 
 
 import org.adempiere.webui.component.Checkbox;
-import org.adempiere.webui.component.SimpleTreeModel;
+import org.adempiere.webui.component.MyDefaulTreeModel;
 import org.adempiere.webui.util.TreeUtils;
 import org.compiere.model.MTreeNode;
 import org.compiere.util.Env;
@@ -24,11 +24,12 @@ import org.compiere.util.Util;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zul.DefaultTreeNode;
 import org.zkoss.zul.Panel;
 import org.zkoss.zul.Panelchildren;
-import org.zkoss.zul.SimpleTreeNode;
 import org.zkoss.zul.Toolbar;
 import org.zkoss.zul.Tree;
+import org.zkoss.zul.TreeModel;
 import org.zkoss.zul.Treeitem;
 
 /**
@@ -75,7 +76,7 @@ public class ADTreePanel extends Panel implements EventListener
     	if(!Util.isEmpty(whereClause)) {
 			whereClause = Env.parseContext(Env.getCtx(), windowNo, whereClause, false, false);
 		}
-    	SimpleTreeModel.initADTree(tree, AD_Tree_ID, windowNo, editable, whereClause, null);
+    	MyDefaulTreeModel.initADTree(tree, AD_Tree_ID, windowNo, editable, whereClause, null);
     	pnlSearch.initialise();
     }
     //	End Yamel Senih
@@ -181,65 +182,66 @@ public class ADTreePanel extends Panel implements EventListener
 	 *  @param  imageIndicator image indicator
 	 */
 	public void nodeChanged (boolean save, int keyID,
-		String name, String description, boolean isSummary, String imageIndicator)
-	{
-		if (tree == null)
-			return;
-		
-		//	if ID==0=root - don't update it
-		if (keyID == 0)
-			return;	
-
-		//  try to find the node
-		SimpleTreeModel model = (SimpleTreeModel) tree.getModel();
-		SimpleTreeNode root = model.getRoot();
-		SimpleTreeNode node = model.find(null, keyID);
-		
-		//  Node not found and saved -> new
-		if (node == null && save)
+			String name, String description, boolean isSummary, String imageIndicator)
 		{
-			MTreeNode rootData = (MTreeNode) root.getData();
-			MTreeNode mTreeNode = new MTreeNode (keyID, 0, name, description,
-				rootData.getNode_ID(), isSummary, imageIndicator, false, null);
-			SimpleTreeNode newNode = new SimpleTreeNode(mTreeNode, null); 
-			model.addNode(root, newNode, 0);
-			int[] path = model.getPath(model.getRoot(), newNode);
-			Treeitem ti = tree.renderItemByPath(path);
-			tree.setSelectedItem(ti);
-		}
+			if (tree == null)
+				return;
+			
+			//	if ID==0=root - don't update it
+			if (keyID == 0)
+				return;	
 
-		//  Node found and saved -> change
-		else if (node != null && save)
+			//  try to find the node
+			TreeModel<?> tr = tree.getModel();
+			MyDefaulTreeModel model = (MyDefaulTreeModel) tr;
+			DefaultTreeNode root = model.getRoot();
+			DefaultTreeNode node = model.find(null, keyID);
+			
+			//  Node not found and saved -> new
+			if (node == null && save)
+			{
+				MTreeNode rootData = (MTreeNode) root.getData();
+				MTreeNode mTreeNode = new MTreeNode (keyID, 0, name, description,
+					rootData.getNode_ID(), isSummary, imageIndicator, false, null);
+				DefaultTreeNode newNode = new DefaultTreeNode(mTreeNode); 
+				model.addNode(root, newNode, 0);
+				int[] path = model.getPath(newNode);
+				Treeitem ti = tree.renderItemByPath(path);
+				tree.setSelectedItem(ti);
+			}
+
+			//  Node found and saved -> change
+			else if (node != null && save)
+			{
+				MTreeNode mTreeNode = (MTreeNode) node.getData();
+				mTreeNode.setName (name);
+				mTreeNode.setAllowsChildren(isSummary);
+				int[] path = model.getPath(node);
+				Treeitem ti = tree.renderItemByPath(path);
+				tree.setSelectedItem(ti);
+			}
+
+			//  Node found and not saved -> delete
+			else if (node != null && !save)
+			{
+				model.removeNode(node);
+			}
+
+			//  Error
+			else
+			{
+				node = null;
+			}
+
+			//  Nothing to display
+			if (node == null)
+				return;
+
+		}   //  nodeChanged
+
+		public int getTreeId()
 		{
-			MTreeNode mTreeNode = (MTreeNode) node.getData();
-			mTreeNode.setName (name);
-			mTreeNode.setAllowsChildren(isSummary);
-			int[] path = model.getPath(model.getRoot(), node);
-			Treeitem ti = tree.renderItemByPath(path);
-			tree.setSelectedItem(ti);
+			return treeId;
 		}
-
-		//  Node found and not saved -> delete
-		else if (node != null && !save)
-		{
-			model.removeNode(node);
-		}
-
-		//  Error
-		else
-		{
-			node = null;
-		}
-
-		//  Nothing to display
-		if (node == null)
-			return;
-
-	}   //  nodeChanged
-
-	public int getTreeId()
-	{
-		return treeId;
-	}
 
 }

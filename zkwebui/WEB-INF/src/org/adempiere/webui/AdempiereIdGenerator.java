@@ -24,65 +24,64 @@ import org.compiere.model.MSysConfig;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Desktop;
 import org.zkoss.zk.ui.Page;
+import org.zkoss.zk.ui.metainfo.ComponentInfo;
 import org.zkoss.zk.ui.sys.IdGenerator;
 
 /**
+ * Delegador de ID Generator configurable vía System Config de ADempiere.
  * 
- * @author: Teo Sarca
+ * @author Teo Sarca
  */
 public class AdempiereIdGenerator implements IdGenerator
 {
-	public static final String SYSCONFIG_IdGenerator = "org.adempiere.webui.IdGenerator";
-	public static final String SYSCONFIG_IdGenerator_Default = org.adempiere.webui.SahiIdGenerator.class.getCanonicalName();
-	
-	/* use this to add a component prefix to identify zk component
-	 * if the prefix starts with unq then it will be used as is - if it doesn't then a sequence suffix will be added to guarantee uniqueness
-	 */
-	public static final String ZK_COMPONENT_PREFIX_ATTRIBUTE = "zk_component_prefix";
+    public static final String SYSCONFIG_IdGenerator = "org.adempiere.webui.IdGenerator";
+    public static final String SYSCONFIG_IdGenerator_Default = org.adempiere.webui.SahiIdGenerator.class.getCanonicalName();
 
-	private static IdGenerator idGenerator = null;
+    public static final String ZK_COMPONENT_PREFIX_ATTRIBUTE = "zk_component_prefix";
 
-	public static void setIdGenerator(IdGenerator generator)
-	{
-		idGenerator = generator;
-	}
+    private static IdGenerator idGenerator = null;
 
-	public static IdGenerator getIdGenerator()
-	{
-		if (idGenerator == null)
-		{
-			String classname = MSysConfig.getValue(SYSCONFIG_IdGenerator, SYSCONFIG_IdGenerator_Default);
-			ClassLoader cl = Thread.currentThread().getContextClassLoader();
-			if (cl == null)
-				cl = AdempiereIdGenerator.class.getClassLoader();
+    public static void setIdGenerator(IdGenerator generator)
+    {
+        idGenerator = generator;
+    }
 
-			try
-			{
-				idGenerator = (IdGenerator)cl.loadClass(classname).newInstance();
-			}
-			catch (Exception e)
-			{
-				throw new AdempiereException(e);
-			}
-		}
-		return idGenerator;
-	}
+    public static IdGenerator getIdGenerator()
+    {
+        if (idGenerator == null)
+        {
+            String classname = MSysConfig.getValue(SYSCONFIG_IdGenerator, SYSCONFIG_IdGenerator_Default);
+            ClassLoader cl = Thread.currentThread().getContextClassLoader();
+            if (cl == null)
+                cl = AdempiereIdGenerator.class.getClassLoader();
 
-	@Override
-	public String nextComponentUuid(Desktop desktop, Component comp)
-	{
-		return getIdGenerator().nextComponentUuid(desktop, comp);
-	}
+            try
+            {
+                idGenerator = (IdGenerator)cl.loadClass(classname).newInstance();
+            }
+            catch (Exception e)
+            {
+                throw new AdempiereException(e);
+            }
+        }
+        return idGenerator;
+    }
 
-	@Override
-	public String nextDesktopId(Desktop desktop)
-	{
-		return getIdGenerator().nextDesktopId(desktop);
-	}
+    @Override
+    public String nextComponentUuid(Desktop desktop, Component comp, ComponentInfo compInfo)
+    {
+        return getIdGenerator().nextComponentUuid(desktop, comp, compInfo);
+    }
 
-	@Override
-	public String nextPageUuid(Page page)
-	{
-		return getIdGenerator().nextPageUuid(page);
-	}
+    @Override
+    public String nextDesktopId(Desktop desktop)
+    {
+        return getIdGenerator().nextDesktopId(desktop);
+    }
+
+    @Override
+    public String nextPageUuid(Page page)
+    {
+        return getIdGenerator().nextPageUuid(page);
+    }
 }

@@ -71,9 +71,9 @@ import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
-import org.zkoss.zkex.zul.North;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.North;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Fileupload;
@@ -945,7 +945,7 @@ public class ZkReportViewer extends Window implements EventListener {
 			if (file == null)
 				return;
 		}
-		catch (InterruptedException e)
+		catch (Exception e)
 		{
 			log.warning(e.getLocalizedMessage());
 			return;
@@ -1297,7 +1297,7 @@ public class ZkReportViewer extends Window implements EventListener {
 					//	
 					return true;
 				}
-			} catch (InterruptedException e) {
+			} catch (Exception e) {
 				log.severe(e.getLocalizedMessage());
 			}
 		}
