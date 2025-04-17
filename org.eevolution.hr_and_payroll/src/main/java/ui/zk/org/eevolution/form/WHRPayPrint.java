@@ -47,10 +47,10 @@ import org.eevolution.hr.services.HRPayPrint;
 import org.eevolution.hr.util.HRPaymentExport;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
-import org.zkoss.zkex.zul.South;
-import org.zkoss.zkmax.zul.Filedownload;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.South;
+import org.zkoss.zul.Filedownload;
 
 import java.io.File;
 import java.io.FileInputStream;
