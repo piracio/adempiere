@@ -72,10 +72,10 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zkex.zul.Borderlayout;
-import org.zkoss.zkex.zul.Center;
-import org.zkoss.zkex.zul.North;
-import org.zkoss.zkex.zul.South;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.North;
+import org.zkoss.zul.South;
 import org.zkoss.zul.Html;
 import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.Row;
@@ -458,7 +458,7 @@ ValueChangeListener,Serializable,WTableModelListener
 					{
 					Messagebox.show( Msg.parseTranslation(Env.getCtx(), "@MovementDate@ @NotFound@"), "Info",Messagebox.OK, Messagebox.INFORMATION);
 					}
-					catch (InterruptedException ex)
+					catch (Exception ex)
 					{
 						throw new AdempiereException (ex);
 					}
@@ -471,7 +471,7 @@ ValueChangeListener,Serializable,WTableModelListener
 				{
 				Messagebox.show(Msg.parseTranslation(Env.getCtx(), "@MLocator_ID@ @NotFound@"),"Info", Messagebox.OK, Messagebox.INFORMATION);
 				}
-				catch (InterruptedException ex)
+				catch (Exception ex)
 				{
 					throw new AdempiereException (ex);
 				}
@@ -487,7 +487,7 @@ ValueChangeListener,Serializable,WTableModelListener
 			{
 			result = Messagebox.show(Msg.getMsg(Env.getCtx(), "Update"),"",Messagebox.OK|Messagebox.CANCEL,Messagebox.QUESTION);
 			}
-			catch (InterruptedException ex)
+			catch (Exception ex)
 			{
 				throw new AdempiereException(ex);
 			}
@@ -503,11 +503,11 @@ ValueChangeListener,Serializable,WTableModelListener
 					return;
 				}
 				}
-				catch (InterruptedException ex)
+				catch (Exception ex)
 				{
 					throw new AdempiereException(ex);
 				}
-                Clients.showBusy(null, false);
+                Clients.clearBusy();
 			}
 			TabsReceiptsIssue.setSelectedIndex(0);
 		}	
