@@ -83,8 +83,16 @@ html,body {
 }
 
 .login-btn {
-	height: 36px;
-	width: 72px;
+	background-color: #007BFF;
+	color: white;
+	font-weight: bold;
+	border: none;
+	border-radius: 6px;
+	padding: 8px 24px;
+	font-size: 14px;
+	cursor: pointer;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	transition: background-color 0.3s ease;
 }
 
 .login-east-panel, .login-west-panel {
