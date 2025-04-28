@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
@@ -251,7 +251,7 @@ public class WDocActionPanel extends Window implements EventListener
 	private void init()
 	{
 
-		Grid grid = GridFactory.newGridLayout();
+		CustomGrid grid = GridFactory.newGridLayout();
         grid.setId("grd");
         grid.setWidth("400px");
 

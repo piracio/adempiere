@@ -22,7 +22,7 @@ import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListHeader;
 import org.adempiere.webui.component.ListItem;
@@ -144,7 +144,7 @@ public class WWFActivity extends ADForm implements EventListener
 
 	private void init()
 	{
-		Grid grid = new Grid();
+		CustomGrid grid = new CustomGrid();
 		grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setStyle("margin:0; padding:0; position: absolute; align: center; valign: center;");

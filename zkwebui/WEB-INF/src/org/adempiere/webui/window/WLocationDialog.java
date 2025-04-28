@@ -29,7 +29,7 @@ import java.util.StringTokenizer;
 import java.util.logging.Level;
 
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListItem;
@@ -127,7 +127,7 @@ public class WLocationDialog extends Window implements EventListener
 
 	private Button btnOk;
 	private Button btnCancel;
-	private Grid mainPanel;
+	private CustomGrid mainPanel;
 
 	private boolean change = false;
 	private MLocation location;

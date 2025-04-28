@@ -7,7 +7,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.GridPanel;
 import org.adempiere.webui.component.Panel;
@@ -55,7 +55,7 @@ public class WQuickEntrySheet extends Window implements EventListener, DataStatu
 	public Trx						trx					= null;
 
 	private Borderlayout			selPanel			= new Borderlayout();
-	private Grid					selNorthPanel		= GridFactory.newGridLayout();
+	private CustomGrid					selNorthPanel		= GridFactory.newGridLayout();
 	private ConfirmPanel			selSouthPanel		= new ConfirmPanel(true, true, false, false, false, false);
 	private Button					bDelete				= selSouthPanel.createButton(ConfirmPanel.A_DELETE);
 	private Button					bSave				= selSouthPanel.createButton(ConfirmPanel.A_SAVE);

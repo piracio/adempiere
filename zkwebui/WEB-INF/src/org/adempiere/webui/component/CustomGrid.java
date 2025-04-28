@@ -25,7 +25,7 @@ import java.util.Map;
 
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.EventListener;
-import org.zkoss.zk.ui.event.Express;
+//import org.zkoss.zk.ui.event.Express;
 
 /**
  *
@@ -33,14 +33,14 @@ import org.zkoss.zk.ui.event.Express;
  * @date    Feb 25, 2007
  * @version $Revision: 0.10 $
  */
-public class Grid extends org.zkoss.zul.Grid
+public class CustomGrid extends org.zkoss.zul.Grid
 {
 	private static final long serialVersionUID = -4483759833677794926L;
 	private boolean noStrip = false;
 	private String oddRowSclass;
 	private transient Map<String, List<EventListenerInfo>> listeners;
 
-    public Grid() {
+    public CustomGrid() {
 		super();
 		//cache default
 		oddRowSclass = super.getOddRowSclass();
@@ -86,42 +86,44 @@ public class Grid extends org.zkoss.zul.Grid
 			oddRowSclass = scls;
 		super.setOddRowSclass(scls);
 	}
+	@Override
 	public boolean addEventListener(String evtnm, EventListener listener)
 	{
-		return addEventListener((listener instanceof Express) ? 1000 : 0, evtnm, listener);
+		 return addEventListenerInternal(0, evtnm, listener); // sin usar Express
 	}
-	
-	public boolean addEventListener(int priority, String evtnm, EventListener listener)
-	{
-		boolean b = super.addEventListener(evtnm, listener);
-		if (b)
-		{
-			final EventListenerInfo listenerInfo = new EventListenerInfo(priority, listener);
-			List<EventListenerInfo> list = listeners.get(evtnm);
-			if (list != null)
-			{
-				for (Iterator<EventListenerInfo> it = list.iterator(); it.hasNext();)
-				{
-					final EventListenerInfo li = it.next();
-					if (li.listener.equals(listener))
-					{
-						if (li.priority == priority)
-							return false; // nothing to do
-						it.remove(); // re-added later
-						break;
-					}
-				}
 
-				list.add(listenerInfo);
-			}
-			else
-			{
-				listeners.put(evtnm, list = new LinkedList<EventListenerInfo>());
-				list.add(listenerInfo);
-			}
-		}
-		return b;
+	private boolean addEventListenerInternal(int priority, String evtnm, EventListener listener)
+	{
+	    boolean b = super.addEventListener(evtnm, listener);
+	    if (b)
+	    {
+	        final EventListenerInfo listenerInfo = new EventListenerInfo(priority, listener);
+	        List<EventListenerInfo> list = listeners.get(evtnm);
+	        if (list != null)
+	        {
+	            for (Iterator<EventListenerInfo> it = list.iterator(); it.hasNext();)
+	            {
+	                final EventListenerInfo li = it.next();
+	                if (li.listener.equals(listener))
+	                {
+	                    if (li.priority == priority)
+	                        return false; // nothing to do
+	                    it.remove(); // re-added later
+	                    break;
+	                }
+	            }
+
+	            list.add(listenerInfo);
+	        }
+	        else
+	        {
+	            listeners.put(evtnm, list = new LinkedList<EventListenerInfo>());
+	            list.add(listenerInfo);
+	        }
+	    }
+	    return b;
 	}
+
 
 	public boolean removeEventListener(String evtnm, EventListener listener)
 	{
@@ -146,7 +148,7 @@ public class Grid extends org.zkoss.zul.Grid
 		return b;
 	}
 
-	public void copyEventListeners(Grid grid)
+	public void copyEventListeners(CustomGrid grid)
 	{
 		for (String evtnm : listeners.keySet())
 		{

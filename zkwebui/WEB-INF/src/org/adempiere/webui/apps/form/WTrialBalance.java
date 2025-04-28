@@ -32,7 +32,7 @@ import org.adempiere.exceptions.ValueChangeEvent;
 import org.adempiere.exceptions.ValueChangeListener;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListHead;
@@ -97,7 +97,7 @@ public class WTrialBalance extends TrialBalanceDrill implements IFormController,
 
 	private Borderlayout	mainLayout		= new Borderlayout();
 	private Panel			parameterPanel	= new Panel();
-	private Grid			parameterLayout	= GridFactory.newGridLayout();
+	private CustomGrid			parameterLayout	= GridFactory.newGridLayout();
 	private Panel			commandPanel	= new Panel();
 	private Borderlayout	commandLayout	= new Borderlayout();
 	private WListbox		miniTable		= ListboxFactory.newDataTable();

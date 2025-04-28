@@ -15,7 +15,7 @@ package org.adempiere.webui.panel;
 import java.util.List;
 
 import org.adempiere.webui.component.CWindowToolbar;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridPanel;
 import org.adempiere.webui.panel.ADTabPanel.EmbeddedPanel;
 import org.adempiere.webui.panel.ADTabPanel.HorizontalEmbeddedPanel;
@@ -123,7 +123,7 @@ public interface IADTabPanel extends Component, Evaluatee {
 	
 	public void setSelected(IADTabPanel panel);
 	
-	public Grid getGrid();
+	public org.zkoss.zul.Grid getGrid();
 	
 	public GridPanel getListPanel();
 	

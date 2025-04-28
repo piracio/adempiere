@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListItem;
 import org.adempiere.webui.component.Listbox;
@@ -147,7 +147,7 @@ public class InfoPAttributePanel extends Window implements EventListener
 		South south = new South();
 		layout.appendChild(south);
 
-		Grid grid = new Grid();
+		CustomGrid grid = new CustomGrid();
 		grid.setWidth("400px");
 		grid.setStyle("margin:0; padding:0;");
 		grid.makeNoStrip();

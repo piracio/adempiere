@@ -1,6 +1,6 @@
 package org.adempiere.webui.apps.graph;
 
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
@@ -53,7 +53,7 @@ public class WPAPanel extends Panel implements EventListener
 	 */
 	private void init()
 	{
-		Grid grid = new Grid();
+		CustomGrid grid = new CustomGrid();
 		appendChild(grid);
 		grid.setWidth("100%");
 		grid.setStyle("margin:0; padding:0; position: absolute;");

@@ -23,8 +23,8 @@ public class GridFactory {
 	 * New instance of grid for form layout
 	 * @return Grid
 	 */
-	public static Grid newGridLayout() {
-		Grid grid = new Grid();
+	public static CustomGrid newGridLayout() {
+		CustomGrid grid = new CustomGrid();
 		grid.makeNoStrip();
 		return grid;
 	}

@@ -42,6 +42,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.zkforge.keylistener.Keylistener;
+//import org.zkforge.keylistener.Keylistener;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.HtmlBasedComponent;
 import org.zkoss.zk.ui.event.Events;
@@ -118,7 +119,8 @@ public class ADWindowPanel extends AbstractADWindowPanel
 	        North n = new North();
 	        n.setParent(layout);
 	        n.setCollapsible(false);
-	        n.setFlex(true);
+	        n.setHflex("1");
+	        n.setVflex("1");
 	        Vbox box = new Vbox();
 	        box.setWidth("100%");
 	        toolbar.setParent(box);
@@ -148,7 +150,8 @@ public class ADWindowPanel extends AbstractADWindowPanel
     	        layout.appendChild(west);
     	        west.setSplittable(false);
     	        west.setAutoscroll(true);
-    	        west.setFlex(true);
+    	        west.setHflex("1");
+    	        west.setVflex("1");
     	        LayoutUtils.addSclass("adwindow-nav adwindow-left-nav", west);
     	        adTab.setTabplacement(IADTab.LEFT);
     	        adTab.getTabSelectionComponent().setParent(west);
@@ -165,7 +168,9 @@ public class ADWindowPanel extends AbstractADWindowPanel
 		        layout.appendChild(east);
 		        east.setSplittable(false);
 		        east.setAutoscroll(true);
-		        east.setFlex(true);
+		        //east.setFlex(true);
+		        east.setHflex("1");
+		        east.setVflex("1");
 		        LayoutUtils.addSclass("adwindow-nav adwindow-right-nav", east);
 		        adTab.setTabplacement(IADTab.RIGHT);
 		        adTab.getTabSelectionComponent().setParent(east);
@@ -182,14 +187,16 @@ public class ADWindowPanel extends AbstractADWindowPanel
         contentArea = new Center();
         contentArea.setParent(layout);
         contentArea.setAutoscroll(true);
-        contentArea.setFlex(true);
+        //contentArea.setFlex(true);
+        contentArea.setHflex("1");
+        contentArea.setVflex("1");
         adTab.createPart(contentArea);
 
         if (parent instanceof Tabpanel) {
         	TabOnCloseHanlder handler = new TabOnCloseHanlder();
         	((Tabpanel)parent).setOnCloseHandler(handler);
         }
-
+        
         if (!isEmbedded()) {
         	if (keyListener != null)
         		keyListener.detach();

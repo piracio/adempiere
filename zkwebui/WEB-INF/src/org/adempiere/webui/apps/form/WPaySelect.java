@@ -26,7 +26,7 @@ import org.adempiere.webui.apps.ProcessModalDialog;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Listbox;
@@ -105,7 +105,7 @@ public class WPaySelect extends PaySelect
 	private Panel parameterPanel = new Panel();
 	private Label labelBankAccount = new Label();
 	private Listbox fieldBankAccount = ListboxFactory.newDropdownListbox();
-	private Grid parameterLayout = GridFactory.newGridLayout();
+	private CustomGrid parameterLayout = GridFactory.newGridLayout();
 	private Label labelBankBalance = new Label();
 	private Label labelCurrency = new Label();
 	private Label labelBalance = new Label();

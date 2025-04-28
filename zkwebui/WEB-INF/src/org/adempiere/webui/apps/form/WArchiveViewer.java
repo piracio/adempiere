@@ -31,7 +31,7 @@ import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
 import org.adempiere.webui.component.DatetimeBox;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListItem;
 import org.adempiere.webui.component.Listbox;
@@ -213,7 +213,7 @@ public class WArchiveViewer extends Archive implements IFormController, EventLis
 		reportField.setLabel(Msg.translate(Env.getCtx(), "IsReport"));
 		reportField.addEventListener(Events.ON_CHECK, this);
 		
-		Grid gridQuery = new Grid();
+		CustomGrid gridQuery = new CustomGrid();
 		gridQuery.setWidth("500px");
 		gridQuery.setStyle("margin:0; padding:0;");
 		gridQuery.makeNoStrip();
@@ -318,7 +318,7 @@ public class WArchiveViewer extends Archive implements IFormController, EventLis
 		tabpanels.appendChild(tabQueryPanel);
 		tabs.appendChild(tabQuery);
 		
-		Grid gridView = new Grid();
+		CustomGrid gridView = new CustomGrid();
 		gridView.setStyle("margin:0; padding:0;");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");

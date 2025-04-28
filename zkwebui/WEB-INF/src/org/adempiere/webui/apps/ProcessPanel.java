@@ -26,7 +26,7 @@ import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -149,7 +149,7 @@ public class ProcessPanel extends ProcessController implements SmallViewEditable
 	private Borderlayout mainLayout;
 	private Div 	messageDiv;
 	private North 	messagePanel;
-	private Grid 	parameterPanel;
+	private CustomGrid 	parameterPanel;
 	
 	private Html message = null;
 	private Button bOK = null;
@@ -225,7 +225,7 @@ public class ProcessPanel extends ProcessController implements SmallViewEditable
 		
 		//	Buttons Panel
 		if(isShowButtons()) {
-			Grid southRowPanel = GridFactory.newGridLayout();
+			CustomGrid southRowPanel = GridFactory.newGridLayout();
 			Rows rows = southRowPanel.newRows();
 			Row row = rows.newRow();
 			Hbox hBox = new Hbox();

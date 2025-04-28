@@ -41,6 +41,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.spin.authentication.services.OpenIDUtil;
 import org.zkforge.keylistener.Keylistener;
+//import org.zkforge.keylistener.Keylistener;
 import org.zkoss.zk.au.AuService;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Desktop;
@@ -97,8 +98,10 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
     private ClientInfo		   clientInfo;
 
 	private String langSession;
-
+	
 	private Keylistener keyListener;
+
+	//private Keylistener keyListener;
 
 	private static final CLogger logger = CLogger.getCLogger(AdempiereWebUI.class);
 
@@ -210,11 +213,20 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 		Env.setContext(ctx, "#ShowTrl", true);
 		Env.setContext(ctx, "#ShowAcct", MRole.getDefault().isShowAcct());
 		Env.setContext(ctx, "#ShowAdvanced", true);
+		
+		 // ---- Keylistener Setup (Migrado correctamente) ----
+	    if (keyListener == null) {
+	        keyListener = new Keylistener();
+	        keyListener.setPage(this.getPage());
+	        keyListener.setCtrlKeys("@a@c@d@e@f@h@l@m@n@o@p@r@s@t@z@x@#left@#right@#up@#down@#home@#end#enter^u@u@#pgdn@#pgup$#f2^#f2");
+	        keyListener.setAutoBlur(false);
+	        // appendChild al contenedor correspondiente
+	        this.appendChild(keyListener); // o statusBar.appendChild(keyListener); si tienes un statusBar disponible
+	        keyListener.addEventListener(Events.ON_CTRL_KEY, this);
+	    }
+	    // -----------------------------------------------
 
-		keyListener = new Keylistener();
-		keyListener.setPage(this.getPage());
-		keyListener.setCtrlKeys("@a@c@d@e@f@h@l@m@n@o@p@r@s@t@z@x@#left@#right@#up@#down@#home@#end#enter^u@u@#pgdn@#pgup$#f2^#f2");
-		keyListener.setAutoBlur(false);
+
 
 		//auto commit user preference
 		String autoCommit = SessionManager.getUserPreference(httpSession.getId()).getProperty(UserPreference.P_AUTO_COMMIT);
@@ -316,15 +328,7 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 				});
 	}
 
-	/**
-	 * @return key listener
-	 */
-	public Keylistener getKeylistener() {
-		return keyListener;
-	}
-
-
-    private void createDesktop()
+ void createDesktop()
     {
     	applicationDesktop = null;
 		String className = MSysConfig.getValue(IDesktop.CLASS_NAME_KEY);
@@ -420,7 +424,6 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 
 	public void clearDesktop(){
 		//Reset the password
-		keyListener = null;
 		clientInfo = null;
 		loginDesktop = null;
 		applicationDesktop = null;
@@ -464,5 +467,11 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 			});
 		});
 		return authenticated.get();
+	}
+
+	@Override
+	public Keylistener getKeylistener() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

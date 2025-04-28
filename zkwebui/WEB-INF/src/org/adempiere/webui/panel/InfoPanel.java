@@ -36,7 +36,7 @@ import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListModelTable;
@@ -489,7 +489,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 		p_northLayout.appendChild(spWest);
 		p_northLayout.appendChild(spCenter);
 		// spWest - the reset button
-		Grid bGrid = GridFactory.newGridLayout();
+		CustomGrid bGrid = GridFactory.newGridLayout();
 		Rows bRows = new Rows();
 		Row bRow = new Row();
 		bGrid.appendChild(bRows);
@@ -547,7 +547,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
     protected North p_centerNorth = new North();
 	protected Center p_centerCenter = new Center();
 	protected South p_centerSouth = new South();
-	protected Grid p_criteriaGrid = GridFactory.newGridLayout();
+	protected CustomGrid p_criteriaGrid = GridFactory.newGridLayout();
 
 	protected int p_height;
 	protected int p_width;

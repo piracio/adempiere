@@ -46,136 +46,121 @@ import java.util.Properties;
 
 /**
  *
- * @author  <a href="mailto:agramdass@gmail.com">Ashley G Ramdass</a>
+ * @author <a href="mailto:agramdass@gmail.com">Ashley G Ramdass</a>
  * @author <a href="mailto:sendy.yagambrum@posterita.org">Sendy Yagambrum</a>
  * @author eEvolution author Victor Perez <victor.perez@e-evolution.com>
- * @see  [ 1258 ]The change role throw exception  </a>
- *         <a href="https://github.com/adempiere/adempiere/issues/1258">
+ * @see [ 1258 ]The change role throw exception </a>
+ *      <a href="https://github.com/adempiere/adempiere/issues/1258">
  * @author Yamel Senih, ysenih@erpcya.com, ERPCyA http://www.erpcya.com
- *		<a href="https://github.com/adempiere/adempiere/issues/1347">
- * 		@see FR [ 1347 ] HTTP Status 500 when a ROLE is changed.</a>
+ *         <a href="https://github.com/adempiere/adempiere/issues/1347">
+ * @see FR [ 1347 ] HTTP Status 500 when a ROLE is changed.</a>
  */
-public class LoginWindow extends FWindow implements EventListener
-{
-    /**
+public class LoginWindow extends FWindow implements EventListener {
+	/**
 	 *
 	 */
 	private static final long serialVersionUID = -365979563919913804L;
-    private Properties ctx;
-    private LoginPanel pnlLogin;
-    private RolePanel pnlRole;
-    private PassResetPanel pnlResetPass;
-    private NewPassPanel pnlNewPass;
-    private boolean isPassReset;
+	private Properties ctx;
+	private LoginPanel pnlLogin;
+	private RolePanel pnlRole;
+	private PassResetPanel pnlResetPass;
+	private NewPassPanel pnlNewPass;
+	private boolean isPassReset;
 
-    public LoginWindow()
-    {
-        this.ctx = Env.getCtx();
-        initComponents();
-        init();
-        // add listener on 'ENTER' key for the login window
-        addEventListener(Events.ON_OK,this);
-    }
+	public LoginWindow() {
+		this.ctx = Env.getCtx();
+		initComponents();
+		init();
+		// add listener on 'ENTER' key for the login window
+		addEventListener(Events.ON_OK, this);
+		//setWidgetListener("onOK", "zAu.cmd0.showBusy(null)");
+	}
 
-    private void init()
-    {
-    	 String token = Executions.getCurrent().getParameter("token");
-    	if(token != null)
-    		this.newPassword(); 		
-    	else
-    		this.appendChild(pnlLogin);
-        
-    	this.setStyle("background-color: transparent");
-    }
+	private void init() {
+		String token = Executions.getCurrent().getParameter("token");
+		if (token != null)
+			this.newPassword();
+		else
+			this.appendChild(pnlLogin);
 
-    private void initComponents()
-    {
-        pnlLogin = new LoginPanel(ctx, this);
-    }
+		this.setStyle("background-color: transparent");
+	}
 
-    public void loginOk(String userName, String password)
-    {
-        pnlRole = new RolePanel(ctx, this, userName, password);
-        this.getChildren().clear();
-        this.appendChild(pnlRole);
-    }
-    
-    /**
-     * Login with MUser
-     * @param user
-     */
-    public void loginOk(MUser user)
-    {
-        pnlRole = new RolePanel(ctx, this, user);
-        this.getChildren().clear();
-        this.appendChild(pnlRole);
-    }
+	private void initComponents() {
+		pnlLogin = new LoginPanel(ctx, this);
+	}
 
-    public void resetPassword()
-    {
-        pnlResetPass = new PassResetPanel(ctx, this);
-        this.getChildren().clear();
-        this.appendChild(pnlResetPass);
-    }
+	public void loginOk(String userName, String password) {
+		pnlRole = new RolePanel(ctx, this, userName, password);
+		this.getChildren().clear();
+		this.appendChild(pnlRole);
+	}
 
-    public void newPassword()
-    {
-        pnlNewPass = new NewPassPanel(ctx, this);
-        this.getChildren().clear();
-        this.appendChild(pnlNewPass);
-    }
+	/**
+	 * Login with MUser
+	 * 
+	 * @param user
+	 */
+	public void loginOk(MUser user) {
+		pnlRole = new RolePanel(ctx, this, user);
+		this.getChildren().clear();
+		this.appendChild(pnlRole);
+	}
 
-    public void loginCompleted()
-    {
-        SessionManager.getApplication().loginCompleted();
-    }
+	public void resetPassword() {
+		pnlResetPass = new PassResetPanel(ctx, this);
+		this.getChildren().clear();
+		this.appendChild(pnlResetPass);
+	}
 
-    public void loginCancelled()
-    {
-        pnlLogin = new LoginPanel(ctx, this);
-        this.getChildren().clear();
-        this.appendChild(pnlLogin);
-    }
+	public void newPassword() {
+		pnlNewPass = new NewPassPanel(ctx, this);
+		this.getChildren().clear();
+		this.appendChild(pnlNewPass);
+	}
 
-    public void onEvent(Event event)
-    {
-       // check that 'ENTER' key is pressed
-       if (Events.ON_OK.equals(event.getName()))
-       {
-          /**
-           * LoginWindow can have as a child, either LoginPanel or RolePanel
-           * If LoginPanel is currently a child, validate login when
-           * 'ENTER' key is pressed  or validate Roles if RolePanel is
-           * currently a child
-           */
-           RolePanel rolePanel = (RolePanel)this.getFellowIfAny("rolePanel");
-           if (rolePanel != null)
-           {
-               rolePanel.validateRoles();
-           }
+	public void loginCompleted() {
+		SessionManager.getApplication().loginCompleted();
+	}
 
-           LoginPanel loginPanel = (LoginPanel)this.getFellowIfAny("loginPanel");
-           if (loginPanel != null)
-           {
-               loginPanel.validateLogin();
-               cleanup();
-           }
-           
-           NewPassPanel newPassPanel = (NewPassPanel)this.getFellowIfAny("NewPassPanel");
-           if (newPassPanel != null)
-           {
-        	   newPassPanel.validateLogin();
-               cleanup();
-           }
-           
-           PassResetPanel passResetPanel = (PassResetPanel)this.getFellowIfAny("PassResetPanel");
-           if (passResetPanel != null)
-           {
-        	   passResetPanel.validatePassReset();
-               cleanup();
-           }
-       }
-    }
+	public void loginCancelled() {
+		pnlLogin = new LoginPanel(ctx, this);
+		this.getChildren().clear();
+		this.appendChild(pnlLogin);
+	}
+
+	public void onEvent(Event event) {
+		// check that 'ENTER' key is pressed
+		if (Events.ON_OK.equals(event.getName())) {
+			/**
+			 * LoginWindow can have as a child, either LoginPanel or RolePanel If LoginPanel
+			 * is currently a child, validate login when 'ENTER' key is pressed or validate
+			 * Roles if RolePanel is currently a child
+			 */
+			RolePanel rolePanel = (RolePanel) this.getFellowIfAny("rolePanel");
+			if (rolePanel != null) {
+				rolePanel.validateRoles();
+			}
+
+			LoginPanel loginPanel = (LoginPanel) this.getFellowIfAny("loginPanel");
+			if (loginPanel != null) {
+				loginPanel.validateLogin();
+				cleanup();
+			}
+
+			NewPassPanel newPassPanel = (NewPassPanel) this.getFellowIfAny("NewPassPanel");
+			if (newPassPanel != null) {
+				newPassPanel.validateLogin();
+				cleanup();
+			}
+
+			PassResetPanel passResetPanel = (PassResetPanel) this.getFellowIfAny("PassResetPanel");
+			if (passResetPanel != null) {
+				passResetPanel.validatePassReset();
+				cleanup();
+			}
+		}
+	}
 
 	public void changeRole(Locale locale, Properties ctx) {
 		Env.setCtx(ctx);
@@ -185,9 +170,9 @@ public class LoginWindow extends FWindow implements EventListener
 		MUser user = MUser.get(ctx, Env.getAD_User_ID(ctx));
 		boolean loginWithValue = M_Element.get(Env.getCtx(), I_AD_User.COLUMNNAME_IsLoginUser) != null;
 		String loginName = null;
-		if(user.getLDAPUser() != null) {
+		if (user.getLDAPUser() != null) {
 			loginName = user.getLDAPUser();
-		} else if(loginWithValue) {
+		} else if (loginWithValue) {
 			loginName = user.getValue();
 		} else {
 			loginName = user.getName();
@@ -204,40 +189,39 @@ public class LoginWindow extends FWindow implements EventListener
 		loginOk(user);
 		getDesktop().getSession().setAttribute("Check_AD_User_ID", Env.getAD_User_ID(ctx));
 	}
-	public String getTypedPassword()
-    {
-        if (pnlLogin != null)
-            return  pnlLogin.getTypedPassword();
-        return null;
-    }
 
-    public void setTypedPassword(String password)
-    {
-        if (pnlLogin != null)
-            pnlLogin.setTypedPassword(password);
-    }
+	public String getTypedPassword() {
+		if (pnlLogin != null)
+			return pnlLogin.getTypedPassword();
+		return null;
+	}
 
-    public void setPassReset(boolean isPassReset) {
-    	this.isPassReset = isPassReset;
-    }
+	public void setTypedPassword(String password) {
+		if (pnlLogin != null)
+			pnlLogin.setTypedPassword(password);
+	}
 
-    public boolean isPassReset() {
-    	return isPassReset;
-    }
+	public void setPassReset(boolean isPassReset) {
+		this.isPassReset = isPassReset;
+	}
 
-    public void cleanup() {
-        if (pnlLogin != null) {
-            pnlLogin.detach();
-            pnlLogin = null;
-        }
-        if (pnlRole != null) {
-            pnlRole = null;
-        }
-        if (pnlResetPass != null) {
-            pnlResetPass = null;
-        }
-        if (pnlNewPass != null){
-            pnlNewPass = null;
-        }
-    }
+	public boolean isPassReset() {
+		return isPassReset;
+	}
+
+	public void cleanup() {
+		if (pnlLogin != null) {
+			pnlLogin.detach();
+			pnlLogin = null;
+		}
+		if (pnlRole != null) {
+			pnlRole = null;
+		}
+		if (pnlResetPass != null) {
+			pnlResetPass = null;
+		}
+		if (pnlNewPass != null) {
+			pnlNewPass = null;
+		}
+	}
 }

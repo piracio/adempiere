@@ -89,10 +89,15 @@ public class MenuPanel extends Panel implements EventListener
         menuTree.setId("mnuMain");
         menuTree.setWidth("100%");
         menuTree.setVflex(true);
-        menuTree.setFixedLayout(false);
+        //menuTree.setFixedLayout(false);
         menuTree.setPageSize(-1); // Due to bug in the new paging functionality
         
         menuTree.setStyle("border: none");
+        Treecols treecols = new Treecols();
+        Treecol col = new Treecol();
+        col.setHflex("1");
+        treecols.appendChild(col);
+        menuTree.appendChild(treecols);
         
         pnlSearch = new TreeSearchPanel(menuTree);
         
@@ -115,14 +120,10 @@ public class MenuPanel extends Panel implements EventListener
     
     private void initMenu(MTreeNode rootNode)
     {
-        Treecols treeCols = new Treecols();
-        Treecol treeCol = new Treecol();
         
         Treechildren rootTreeChildren = new Treechildren();
         generateMenu(rootTreeChildren, rootNode);
         
-        treeCols.appendChild(treeCol);
-        menuTree.appendChild(treeCols);
         menuTree.appendChild(rootTreeChildren);
     }
     

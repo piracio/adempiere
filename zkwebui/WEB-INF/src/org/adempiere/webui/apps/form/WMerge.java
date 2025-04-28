@@ -20,7 +20,7 @@ import java.util.logging.Level;
 
 import org.adempiere.webui.apps.BusyDialog;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -69,7 +69,7 @@ public class WMerge extends Merge implements IFormController, EventListener
 
 	private Borderlayout mainLayout = new Borderlayout();
 	private Panel CenterPanel = new Panel();
-	private Grid centerLayout = GridFactory.newGridLayout();
+	private CustomGrid centerLayout = GridFactory.newGridLayout();
 	private Label mergeFromLabel = new Label();
 	private Label mergeToLabel = new Label();
 	private ConfirmPanel confirmPanel = new ConfirmPanel(true);

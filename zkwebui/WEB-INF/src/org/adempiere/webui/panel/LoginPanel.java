@@ -70,7 +70,6 @@ import org.zkoss.zhtml.Td;
 import org.zkoss.zhtml.Tr;
 import org.zkoss.zk.au.out.AuFocus;
 import org.zkoss.zk.au.out.AuScript;
-import org.zkoss.zk.fn.ZkFns;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Session;
@@ -531,7 +530,7 @@ public class LoginPanel extends Window implements EventListener
 
             Locales.setThreadLocal(language.getLocale());
 
-            Clients.evalJavaScript("zk.reload();");//Esto fuerza a ZK a recargar los recursos de localización 
+            Clients.evalJavaScript("location.reload();"); // Recarga completa y efectiva 
             String timeoutText = getUpdateTimeoutTextScript();
             if (!Strings.isEmpty(timeoutText))
             	Clients.response("zkLocaleJavaScript2", new AuScript(null, timeoutText));

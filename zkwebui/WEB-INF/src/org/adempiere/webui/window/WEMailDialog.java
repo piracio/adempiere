@@ -24,7 +24,7 @@ import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
@@ -190,7 +190,7 @@ public class WEMailDialog extends Window implements EventListener, ValueChangeLi
 		statusBar.setStatusDB(null);
 		//
 				
-		Grid grid = new Grid();
+		CustomGrid grid = new CustomGrid();
 		grid.setWidth("480px");
         grid.setStyle("margin:0; padding:0; position: absolute; align: center; valign: center;");
         grid.makeNoStrip();

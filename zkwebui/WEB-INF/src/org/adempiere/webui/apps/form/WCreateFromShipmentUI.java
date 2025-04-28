@@ -22,7 +22,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 
 import org.adempiere.webui.component.Checkbox;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListModelTable;
@@ -187,7 +187,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment
     	Panel parameterPanel = v_CreateFromPanel.getParameterPanel();
 		parameterPanel.appendChild(parameterLayout);
 		
-		Grid parameterStdLayout = GridFactory.newGridLayout();
+		CustomGrid parameterStdLayout = GridFactory.newGridLayout();
     	Panel parameterStdPanel = new Panel();
 		parameterStdPanel.appendChild(parameterStdLayout);
 

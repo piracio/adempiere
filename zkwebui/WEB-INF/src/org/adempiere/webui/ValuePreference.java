@@ -23,7 +23,7 @@ import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
@@ -228,7 +228,7 @@ public class ValuePreference extends Window implements EventListener
 
 	//  Display
 	private Panel setPanel = new Panel();
-	private Grid setLayout = new Grid();
+	private CustomGrid setLayout = new CustomGrid();
 	private Label lAttribute = new Label();
 	private Textbox fAttribute = new Textbox();
 	private Label lAttributeValue = new Label();

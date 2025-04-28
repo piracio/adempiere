@@ -26,7 +26,7 @@ import java.util.logging.Level;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListModelTable;
@@ -82,7 +82,7 @@ public class WCharge extends Charge implements IFormController, EventListener
 
     // new panel
     /** Grid for components for creating a new charge account. */
-    private Grid m_grdNew = GridFactory.newGridLayout();
+    private CustomGrid m_grdNew = GridFactory.newGridLayout();
     /** Value (key) field label. */
     private Label m_lblValue = new Label();
     /** Field for specifying value (key) of new account. */
@@ -107,7 +107,7 @@ public class WCharge extends Charge implements IFormController, EventListener
     /** confirmation panel. */
     private ConfirmPanel m_pnlConfirm = new ConfirmPanel();
     /** Confirmation Grid. */
-    private Grid m_grdConfirm = GridFactory.newGridLayout();
+    private CustomGrid m_grdConfirm = GridFactory.newGridLayout();
 
     /** Enumeration of column names and indices. */
     private enum EColumn
