@@ -19,7 +19,7 @@ package org.eevolution.form;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Listbox;
@@ -101,7 +101,7 @@ public class WHRPayPrint extends HRPayPrint implements IFormController, EventLis
 	//  Static Variables
 	private Panel centerPanel = new Panel();
 	private ConfirmPanel southPanel = new ConfirmPanel(true, false, false, false, false, false, false);
-	private Grid centerLayout = GridFactory.newGridLayout();
+	private CustomGrid centerLayout = GridFactory.newGridLayout();
 	private Button bPrint = southPanel.createButton(ConfirmPanel.A_PRINT);
 	private Button bExport = southPanel.createButton(ConfirmPanel.A_EXPORT);
 	private Button bCancel = southPanel.getButton(ConfirmPanel.A_CANCEL);
