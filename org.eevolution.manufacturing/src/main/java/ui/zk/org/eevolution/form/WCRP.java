@@ -25,7 +25,7 @@ import java.util.logging.Level;
 import org.adempiere.core.domains.models.I_M_Product;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Rows;
@@ -71,7 +71,7 @@ public class WCRP extends CRP implements IFormController, EventListener {
 	CustomForm m_frame = new CustomForm();
 	Borderlayout mainLayout = new Borderlayout();
 
-	private Grid northPanel = GridFactory.newGridLayout();
+	private CustomGrid northPanel = GridFactory.newGridLayout();
 
 	private Hbox centerPanel = new Hbox();
 

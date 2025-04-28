@@ -27,7 +27,7 @@ import java.util.logging.Level;
 import org.adempiere.core.domains.models.I_S_Resource;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Rows;
@@ -133,7 +133,7 @@ public class WCRPDetail extends CRPDetail implements IFormController,
 		Row row = null;
 
 		new GridFactory();
-		Grid northPanel = GridFactory.newGridLayout();
+		CustomGrid northPanel = GridFactory.newGridLayout();
 
 		rows.setParent(northPanel);
 
