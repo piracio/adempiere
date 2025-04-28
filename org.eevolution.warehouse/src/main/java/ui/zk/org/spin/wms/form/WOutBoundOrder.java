@@ -30,7 +30,7 @@ import org.adempiere.exceptions.ValueChangeListener;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListModelTable;
@@ -118,7 +118,7 @@ public class WOutBoundOrder extends OutBoundOrder
 
 	private Borderlayout 	mainLayout = new Borderlayout();
 
-	private Grid 			parameterLayout		= GridFactory.newGridLayout();
+	private CustomGrid 			parameterLayout		= GridFactory.newGridLayout();
 	private Panel 			parameterPanel = new Panel();
 	/**	Organization			*/
 	private WTableDirEditor organizationPick = null;
@@ -172,7 +172,7 @@ public class WOutBoundOrder extends OutBoundOrder
 	private Panel 			medioPanel = new Panel();
 	private Panel 			southPanel = new Panel();
 	private Panel 			allocationPanel = new Panel();
-	private Grid 			allocationLayout = GridFactory.newGridLayout();
+	private CustomGrid 			allocationLayout = GridFactory.newGridLayout();
 	private Borderlayout 	infoLayout = new Borderlayout();
 	private South 			southAdded = new South();
 	/**	Collapsible Panel for Parameter		*/
