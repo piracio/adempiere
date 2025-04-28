@@ -22,7 +22,7 @@ import org.adempiere.pos.WPOSTextField;
 import org.adempiere.pos.grid.WPOSBPartner;
 import org.adempiere.pos.services.POSQueryListener;
 import org.adempiere.webui.apps.AEnv;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListboxFactory;
@@ -111,7 +111,7 @@ public class WQueryBPartner extends WPOSQuery {
 		Panel panel = new Panel();
 		setVisible(true);
 		Panel mainPanel = new Panel();
-		Grid bPartnerLayout = GridFactory.newGridLayout();
+		CustomGrid bPartnerLayout = GridFactory.newGridLayout();
 		
 		Groupbox groupPanel = new Groupbox();
 		Caption v_TitleBorder = new Caption(Msg.getMsg(ctx, "Query"));

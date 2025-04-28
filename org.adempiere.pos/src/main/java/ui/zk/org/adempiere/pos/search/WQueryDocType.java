@@ -24,7 +24,7 @@ import java.util.Properties;
 import org.adempiere.pos.WPOS;
 import org.adempiere.pos.WPOSTextField;
 import org.adempiere.pos.services.POSQueryInterface;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListboxFactory;
@@ -98,7 +98,7 @@ public class WQueryDocType extends WPOSQuery implements POSQueryInterface
 		Panel panel = new Panel();
 		setVisible(true);
 		Panel mainPanel = new Panel();
-		Grid productLayout = GridFactory.newGridLayout();
+		CustomGrid productLayout = GridFactory.newGridLayout();
 		
 		Groupbox groupPanel = new Groupbox();
 		Caption v_TitleBorder = new Caption(Msg.getMsg(ctx, QUERY));

@@ -3,7 +3,7 @@ package org.adempiere.pos;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -58,7 +58,7 @@ public class WPOSUserPinDialog extends Window implements EventListener{
         b_cancel.addActionListener(pos);
 
         Borderlayout mainLayout = new Borderlayout();
-        Grid layout = GridFactory.newGridLayout();
+        CustomGrid layout = GridFactory.newGridLayout();
         mainPanel.appendChild(mainLayout);
         mainPanel.setStyle("width: 100%; height: 100%; padding: 0; margin: 0");
         mainLayout.setHeight("100%");

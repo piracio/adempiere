@@ -17,7 +17,7 @@
 package org.adempiere.pos;
 
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
 
@@ -37,7 +37,7 @@ public class WPOSScalesPanel {
 	private Panel 			centerPanel;
 	private Panel 			parameterPanel;
 	//private BorderLayout 	mainLayout;
-	private Grid parameterLayout;
+	private CustomGrid parameterLayout;
 	//private JScrollPane 	scrollPane;
 
 	public WPOSScalesPanel(WPOS pos) {

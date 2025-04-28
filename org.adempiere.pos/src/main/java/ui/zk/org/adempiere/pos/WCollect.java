@@ -34,7 +34,7 @@ import org.adempiere.pos.services.POSPanelInterface;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -95,11 +95,11 @@ public class WCollect extends Collect implements WPOSKeyListener, EventListener,
 	/**	Panels					*/
 	private WPOS 				posPanel;
 	private Panel 				mainPanel; 
-	private Grid 				eastlayout;
+	private CustomGrid 				eastlayout;
 	private Rows 				rows;
 	private Row 				row;
 	private North 				north;
-	private Grid 				layout;
+	private CustomGrid 				layout;
 	private Panel 				centerPanel;
 	
 	/** Window					 */

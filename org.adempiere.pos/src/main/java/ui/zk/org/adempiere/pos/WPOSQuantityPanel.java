@@ -24,7 +24,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.pos.services.POSPanelInterface;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -83,7 +83,7 @@ public class WPOSQuantityPanel extends WPOSSubPanel implements POSPanelInterface
 	@Override
 	protected void init() {
 
-		Grid LayoutButton = GridFactory.newGridLayout();
+		CustomGrid LayoutButton = GridFactory.newGridLayout();
 
 		Rows rows = null;
 		Row row = null;	

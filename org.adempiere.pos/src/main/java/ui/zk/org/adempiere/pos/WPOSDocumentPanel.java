@@ -20,7 +20,7 @@ import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.pos.search.WQueryBPartner;
 import org.adempiere.pos.services.POSPanelInterface;
 import org.adempiere.webui.apps.AEnv;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Row;
@@ -80,9 +80,9 @@ public class WPOSDocumentPanel extends WPOSSubPanel implements POSKeyListener, P
 	private Caption 		v_TitleInfo;
 	private Groupbox 		v_TotalsGroup;
 	private Groupbox 		v_InfOrderGroup;
-	private Grid 			v_TotalsPanel;
-	private Grid 			v_OrderPanel;
-	private Grid 			v_GroupPanel;
+	private CustomGrid 			v_TotalsPanel;
+	private CustomGrid	v_OrderPanel;
+	private CustomGrid	v_GroupPanel;
 	/** Collect 			*/
 	private WCollect 		collectPayment;
 	/** Scala Dialog 		*/
@@ -258,7 +258,7 @@ public class WPOSDocumentPanel extends WPOSSubPanel implements POSKeyListener, P
 		grandTotal.setStyle("Font-size:1.9em;font-weight:bold");
 
 		// Center Panel
-		Grid layout = GridFactory.newGridLayout();
+		CustomGrid layout = GridFactory.newGridLayout();
 
 		org.adempiere.webui.component.Panel centerPanel = new org.adempiere.webui.component.Panel();
 		appendChild(centerPanel);

@@ -32,7 +32,7 @@ import org.adempiere.pos.services.POSQueryInterface;
 import org.adempiere.pos.services.POSQueryListener;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
@@ -114,7 +114,7 @@ public class WPOSActionPanel extends WPOSSubPanel
 	@Override
 	public void init() {
 
-		Grid LayoutButton = GridFactory.newGridLayout();
+		CustomGrid LayoutButton = GridFactory.newGridLayout();
 		Row row = null;	
 		Rows rows = null;
 			

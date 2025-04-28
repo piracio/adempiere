@@ -31,7 +31,7 @@ import org.adempiere.pos.services.POSPanelInterface;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Datebox;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Listbox;
@@ -81,10 +81,10 @@ public class WCollectDetail extends CollectDetail implements EventListener, POSP
 	
 	/**	Panels				*/
 	private String 			m_TenderType;
-	private Grid 			v_StandarPanel;
-	private Grid 			v_CheckPanel;
-	private Grid 			v_CreditPanel;
-	private Grid 			v_DebitPanel;
+	private CustomGrid 			v_StandarPanel;
+	private CustomGrid		v_CheckPanel;
+	private CustomGrid		v_CreditPanel;
+	private CustomGrid	v_DebitPanel;
 	private Properties 		p_ctx;
 	private Listbox 		fTenderType;
 	public POSNumberBox 	fPayAmt;
@@ -103,7 +103,7 @@ public class WCollectDetail extends CollectDetail implements EventListener, POSP
 	private WPOSTextField 	fCCardVC;
 	
 	/**	Credit Note			*/
-	private Grid			v_CreditMemoPanel;
+	private CustomGrid			v_CreditMemoPanel;
 	private Listbox 		fCreditMemo;
 	private Label			lCreditMemo;
 	

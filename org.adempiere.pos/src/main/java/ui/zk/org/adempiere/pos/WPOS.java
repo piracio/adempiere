@@ -30,7 +30,7 @@ import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.ListboxFactory;
@@ -257,7 +257,7 @@ public class WPOS extends CPOS implements IFormController, EventListener, POSPan
 		Panel panel = new Panel();
 		selection.setTitle(msg);
 		Borderlayout mainLayout = new Borderlayout();
-		Grid layout = GridFactory.newGridLayout();
+		CustomGrid layout = GridFactory.newGridLayout();
 		selection.appendChild(panel);
 		selection.setWidth("400px");
 		selection.setHeight("140px");

@@ -33,7 +33,7 @@ import org.adempiere.pos.services.POSQueryListener;
 import org.adempiere.webui.apps.BusyDialog;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.CustomGrid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
@@ -187,7 +187,7 @@ public abstract class WPOSQuery extends Window implements POSQueryInterface, Mou
 		north.setStyle("border: none");
 		mainLayout.appendChild(north);
 		north.appendChild(northPanel);
-		Grid productLayout = GridFactory.newGridLayout();
+		CustomGrid productLayout = GridFactory.newGridLayout();
 		northPanel.appendChild(productLayout);
 		rows = productLayout.newRows();
 		row = rows.newRow();
