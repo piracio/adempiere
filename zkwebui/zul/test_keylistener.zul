@@ -1,0 +1,18 @@
+<?page title="Test KeyListener" contentType="text/html;charset=UTF-8"?>
+<window title="KeyListener Test" border="normal" width="400px" height="200px"
+    apply="org.zkoss.bind.BindComposer">
+    
+    <vlayout spacing="10px" style="padding:15px;">
+        
+        <label value="Presiona una tecla (Ctrl + cualquier tecla, Insert, Delete, etc.)" />
+
+        <textbox id="output" width="100%" />
+
+        <!-- Nuestro KeyListener -->
+        <keylistener id="keylistener" 
+            ctrlKeys="#f5#del^s^d" 
+            autoblur="true" 
+            onCtrlKey="output.value = 'Tecla presionada: ' + event.keyCode" />
+
+    </vlayout>
+</window>

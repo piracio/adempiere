@@ -214,7 +214,7 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 		Env.setContext(ctx, "#ShowAcct", MRole.getDefault().isShowAcct());
 		Env.setContext(ctx, "#ShowAdvanced", true);
 		
-		 // ---- Keylistener Setup (Migrado correctamente) ----
+		/** // ---- Keylistener Setup (Migrado correctamente) ----
 	    if (keyListener == null) {
 	        keyListener = new Keylistener();
 	        keyListener.setPage(this.getPage());
@@ -225,7 +225,7 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 	        keyListener.addEventListener(Events.ON_CTRL_KEY, this);
 	    }
 	    // -----------------------------------------------
-
+		**/
 
 
 		//auto commit user preference

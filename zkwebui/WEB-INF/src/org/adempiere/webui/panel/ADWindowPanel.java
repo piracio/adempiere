@@ -197,6 +197,7 @@ public class ADWindowPanel extends AbstractADWindowPanel
         	((Tabpanel)parent).setOnCloseHandler(handler);
         }
         
+        /**
         if (!isEmbedded()) {
         	if (keyListener != null)
         		keyListener.detach();
@@ -206,7 +207,7 @@ public class ADWindowPanel extends AbstractADWindowPanel
         	keyListener.addEventListener(Events.ON_CTRL_KEY, toolbar);
         	keyListener.addEventListener(Events.ON_CTRL_KEY, this);
         	keyListener.setAutoBlur(false);
-        }
+        }**/
 
         layout.setAttribute(ITabOnSelectHandler.ATTRIBUTE_KEY, new ITabOnSelectHandler() {
 			public void onSelect() {
