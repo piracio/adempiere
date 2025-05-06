@@ -26,7 +26,7 @@ import org.adempiere.exceptions.ValueChangeEvent;
 import org.adempiere.exceptions.ValueChangeListener;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Combobox;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListboxFactory;
@@ -96,7 +96,7 @@ public class WHRActionNotice extends HRActionNotice implements IFormController,
 
 	//
 	private Borderlayout mainLayout = new Borderlayout();
-	private CustomGrid parameterPanel = new GridFactory().newGridLayout();
+	private Grid parameterPanel = new GridFactory().newGridLayout();
 	// Process
 	private Label labelProcess = new Label();
 	private Combobox fieldProcess = new Combobox();

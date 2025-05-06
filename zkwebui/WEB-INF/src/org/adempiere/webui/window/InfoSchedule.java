@@ -30,7 +30,7 @@ import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.DatetimeBox;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListItem;
@@ -138,7 +138,7 @@ public class InfoSchedule extends Window implements EventListener
 	private static CLogger log = CLogger.getCLogger(InfoSchedule.class);
 
 	private Vbox mainLayout = new Vbox();
-	private CustomGrid parameterPanel = GridFactory.newGridLayout();
+	private Grid parameterPanel = GridFactory.newGridLayout();
 	private Label labelResourceType = new Label();
 	private Listbox fieldResourceType = new Listbox();
 	private Label labelResource = new Label();

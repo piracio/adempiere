@@ -29,211 +29,262 @@ import org.zkoss.zul.Div;
  *    <li>Implement embedded or horizontal tab panel https://adempiere.atlassian.net/browse/ADEMPIERE-319
  *    <li>New ADempiere 3.8.0 ZK Theme Light  https://adempiere.atlassian.net/browse/ADEMPIERE-320
  */
-
 public class StringBox extends Div {
-    private static final long serialVersionUID = 7089099079981906933L;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7089099079981906933L;
 
-    private Textbox textbox;
-    private Obscure m_obscure = null;
+	private Textbox textbox = null;
+	
+	private Obscure	m_obscure = null;
 
-    public StringBox() {
+    
+	public boolean isReadonly()
+	{
+		return textbox.isReadonly();
+	}
+        /**
+     * 
+     * @param integral
+     */
+    public StringBox()
+    {
         super();
         init();
     }
-
-    private void init() {
-        textbox = new Textbox();
-        String style = AEnv.isFirefox2() ? "display: inline" : "display: inline-block";
-        style += ";white-space:nowrap";
-        this.setStyle(style);
+    
+    private void init()
+    {
+		textbox = new Textbox();
+		String style = AEnv.isFirefox2() ? "display: inline" : "display: inline-block"; 
+        style = style + ";white-space:nowrap";
+        this.setStyle(style);	     
         this.appendChild(textbox);
     }
-
-    public void setValue(Object value) {
-        if (value == null)
-            textbox.setValue((String) null);
-        else
-            textbox.setValue(value.toString());
+    
+    
+    
+    
+    
+    /**
+     * 
+     * @param value
+     */
+    public void setValue(Object value)
+    {
+    	if (value == null)
+    		textbox.setValue(null);
+    	else
+    		textbox.setValue(value.toString());
     }
-
-    public String getValue() {
-        return textbox.getValue();
+    
+    /**
+     * 
+     * @return BigDecimal
+     */
+    public String getValue()
+    {
+    	return textbox.getValue();
     }
+    
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public boolean isEnabled()
+	{
+		 return textbox.isReadonly();
+	}
+	
+	/**
+     * method to ease porting of swing form
+     * @param listener
+     */
+	public void addFocusListener(EventListener listener) {
+		textbox.addEventListener(Events.ON_FOCUS, listener);
+		textbox.addEventListener(Events.ON_BLUR, listener);
+	}
+	
+	@Override
+	public boolean addEventListener(String evtnm, EventListener listener)
+	{
+	     
+	         return textbox.addEventListener(evtnm, listener);
+	     
+	}
+	
+	@Override
+	public void focus()
+	{
+		textbox.focus();
+	}
+	
+	public Textbox getTextBox()
+	{
+		return textbox;
+	}
 
-    public boolean isReadonly() {
-        return textbox.isReadonly();
+	public boolean isDisabled() {
+		return textbox.isDisabled();
+	}
+
+	public void setDisabled(boolean disabled) {
+		textbox.setDisabled(disabled);
+	}
+
+	public void setReadonly(boolean readonly) {
+		textbox.setReadonly(readonly);
+	}
+
+	public String getName() {
+		return textbox.getName();
+	}
+
+	public void setName(String name) {
+		textbox.setName(name);
+	}
+
+	public String getErrorMessage() {
+		return textbox.getErrorMessage();
+	}
+
+	public void clearErrorMessage(boolean revalidateRequired) {
+		textbox.clearErrorMessage(revalidateRequired);
+	}
+
+	public void clearErrorMessage() {
+		textbox.clearErrorMessage();
+	}
+
+	public String getText() throws WrongValueException {
+		return textbox.getText();
+	}
+
+	public void setText(String value) throws WrongValueException {
+		textbox.setText(value);
+	}
+
+	public int getMaxlength() {
+		return textbox.getMaxlength();
+	}
+
+	public void setMaxlength(int maxlength) {
+		textbox.setMaxlength(maxlength);
+	}
+
+	public int getCols() {
+		return textbox.getCols();
+	}
+
+	public void setCols(int cols) throws WrongValueException {
+		textbox.setCols(cols);
+	}
+
+	public int getTabindex() {
+		return textbox.getTabindex();
+	}
+
+	public void setTabindex(int tabindex) throws WrongValueException {
+		textbox.setTabindex(tabindex);
+	}
+
+	public boolean isMultiline() {
+		return textbox.isMultiline();
+	}
+
+	public String getType() {
+		return textbox.getType();
+	}
+
+	public void select() {
+		textbox.select();
+	}
+
+	public void setConstraint(String constr) {
+		textbox.setConstraint(constr);
+	}
+
+	public Object getRawValue() {
+		return textbox.getRawValue();
+	}
+
+	public String getRawText() {
+		return textbox.getRawText();
+	}
+
+	public void setRawValue(Object value) {
+		textbox.setRawValue(value);
+	}
+
+	public boolean isValid() {
+		return textbox.isValid();
+	}
+
+	public void setSelectedText(int start, int end, String newtxt,
+			boolean isHighLight) {
+		textbox.setSelectedText(start, end, newtxt, isHighLight);
+	}
+
+	public void setSelectionRange(int start, int end) {
+		textbox.setSelectionRange(start, end);
+	}
+
+	public String getAreaText() {
+		return textbox.getText();
+	}
+
+	public void setConstraint(Constraint constr) {
+		textbox.setConstraint(constr);
+	}
+
+	public Constraint getConstraint() {
+		return textbox.getConstraint();
+	}
+
+	public void setValue(String value) throws WrongValueException {
+		textbox.setValue(value);
+	}
+
+	public void setType(String type) throws WrongValueException {
+		textbox.setType(type);
+	}
+
+	public int getRows() {
+		return textbox.getRows();
+	}
+
+	public void setRows(int rows) throws WrongValueException {
+		textbox.setRows(rows);
+	}
+
+	public void setMultiline(boolean multiline) {
+		textbox.setMultiline(multiline);
+	}
+	
+	public void setObscureType(String obscureType)
+    {
+    	if (obscureType != null && obscureType.length() > 0)
+		{
+			m_obscure = new Obscure ("", obscureType);
+		}
+    	else
+    	{
+    		m_obscure = null;
+    	}
+    	setValue(getValue());
     }
-
-    public void setReadonly(boolean readonly) {
-        textbox.setReadonly(readonly);
-    }
-
-    public boolean isEnabled() {
-        return !textbox.isReadonly(); // corregido
-    }
-
-    public void setDisabled(boolean disabled) {
-        textbox.setDisabled(disabled);
-    }
-
-    public boolean isDisabled() {
-        return textbox.isDisabled();
-    }
-
-    public void focus() {
-        textbox.focus();
-    }
-
-    public void addFocusListener(EventListener<?> listener) {
-        textbox.addEventListener(Events.ON_FOCUS, listener);
-        textbox.addEventListener(Events.ON_BLUR, listener);
-    }
-
-    @Override
-    public void setWidth(String width) {
-        super.setWidth(width);
-        textbox.setWidth(width);
-    }
-
-    @Override
-    public void setHeight(String height) {
-        super.setHeight(height);
-        textbox.setHeight("95%");
-    }
-
-    public Textbox getTextBox() {
-        return textbox;
-    }
-
-    public void setObscureType(String obscureType) {
-        if (obscureType != null && !obscureType.isEmpty()) {
-            m_obscure = new Obscure("", obscureType);
-        } else {
-            m_obscure = null;
-        }
-        setValue(getValue());
-    }
-
-    // Métodos delegados de Textbox
-
-    public void setText(String value) throws WrongValueException {
-        textbox.setText(value);
-    }
-
-    public String getText() throws WrongValueException {
-        return textbox.getText();
-    }
-
-    public void setName(String name) {
-        textbox.setName(name);
-    }
-
-    public String getName() {
-        return textbox.getName();
-    }
-
-    public int getMaxlength() {
-        return textbox.getMaxlength();
-    }
-
-    public void setMaxlength(int maxlength) {
-        textbox.setMaxlength(maxlength);
-    }
-
-    public int getCols() {
-        return textbox.getCols();
-    }
-
-    public void setCols(int cols) throws WrongValueException {
-        textbox.setCols(cols);
-    }
-
-    public void setTabindex(int tabindex) throws WrongValueException {
-        textbox.setTabindex(tabindex);
-    }
-
-    public int getTabindex() {
-        return textbox.getTabindex();
-    }
-
-    public boolean isMultiline() {
-        return textbox.isMultiline();
-    }
-
-    public void setMultiline(boolean multiline) {
-        textbox.setMultiline(multiline);
-    }
-
-    public int getRows() {
-        return textbox.getRows();
-    }
-
-    public void setRows(int rows) throws WrongValueException {
-        textbox.setRows(rows);
-    }
-
-    public String getType() {
-        return textbox.getType();
-    }
-
-    public void setType(String type) throws WrongValueException {
-        textbox.setType(type);
-    }
-
-    public void setConstraint(String constr) {
-        textbox.setConstraint(constr);
-    }
-
-    public void setConstraint(Constraint constraint) {
-        textbox.setConstraint(constraint);
-    }
-
-    public Constraint getConstraint() {
-        return textbox.getConstraint();
-    }
-
-    public void select() {
-        textbox.select();
-    }
-
-    public void setSelectionRange(int start, int end) {
-        textbox.setSelectionRange(start, end);
-    }
-
-    public void setSelectedText(int start, int end, String newtxt, boolean isHighLight) {
-        textbox.setSelectedText(start, end, newtxt, isHighLight);
-    }
-
-    public boolean isValid() {
-        return textbox.isValid();
-    }
-
-    public void clearErrorMessage() {
-        textbox.clearErrorMessage();
-    }
-
-    public void clearErrorMessage(boolean revalidateRequired) {
-        textbox.clearErrorMessage(revalidateRequired);
-    }
-
-    public String getErrorMessage() {
-        return textbox.getErrorMessage();
-    }
-
-    public Object getRawValue() {
-        return textbox.getRawValue();
-    }
-
-    public void setRawValue(Object value) {
-        textbox.setRawValue(value);
-    }
-
-    public String getRawText() {
-        return textbox.getRawText();
-    }
-
-    public String getAreaText() {
-        return textbox.getText();
-    }
+	
+	public void setWidth(String width)
+	{
+		super.setWidth(width);
+		textbox.setWidth(width);
+	}
+	
+	public void setHeight(String height)
+	{
+		super.setHeight(height);
+		textbox.setHeight("95%");
+	}
+	
 }
-

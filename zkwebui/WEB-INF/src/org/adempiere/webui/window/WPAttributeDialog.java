@@ -33,7 +33,7 @@ import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListItem;
 import org.adempiere.webui.component.Listbox;
@@ -193,7 +193,7 @@ public class WPAttributeDialog extends Window implements EventListener
 	//
 	private Borderlayout mainLayout = new Borderlayout();
 	private Panel centerPanel = new Panel();
-	private CustomGrid centerLayout = new CustomGrid();
+	private Grid centerLayout = new Grid();
 	private ConfirmPanel confirmPanel = new ConfirmPanel (true);
 	
 	private String m_columnName = null;

@@ -107,7 +107,7 @@ class GridPanel_Test extends CommonUnitTestSetup {
 
     }
 
-    CustomGrid listMock;
+    Grid listMock;
     GridTab gridTabMock;
     GridPanel gridPanel;
     GridTable gridTableMock;
@@ -417,7 +417,7 @@ class GridPanel_Test extends CommonUnitTestSetup {
         gridTableMock = mock(GridTable.class);
         gridTabMock = mock(GridTab.class);
         tabPanelMock = mock(ADTabPanel.class);
-        listMock = mock(CustomGrid.class);
+        listMock = mock(Grid.class);
         gridPanel = spy(GridPanel.class);
         doNothing().when(gridPanel).setupColumns();
         doNothing().when(gridPanel).render();

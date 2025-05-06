@@ -22,7 +22,7 @@ import java.util.logging.Level;
 
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListModelTable;
@@ -202,7 +202,7 @@ public class WCreateFromStatementUI extends CreateFromStatement
     	Panel parameterPanel = v_CreateFromPanel.getParameterPanel();
 		parameterPanel.appendChild(parameterLayout);
 		
-		CustomGrid parameterBankLayout = GridFactory.newGridLayout();
+		Grid parameterBankLayout = GridFactory.newGridLayout();
     	Panel parameterBankPanel = new Panel();
     	parameterBankPanel.appendChild(parameterBankLayout);
 

@@ -24,7 +24,7 @@ import java.text.DecimalFormat;
 import java.util.logging.Level;
 
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListItem;
 import org.adempiere.webui.component.Listbox;
@@ -107,7 +107,7 @@ public class WAttributeGrid extends ADForm implements EventListener
 		tabbox.appendChild(tabpanels);
 		tabbox.addEventListener(Events.ON_SELECT, this);
 		
-		CustomGrid gridSelection = new CustomGrid();
+		Grid gridSelection = new Grid();
 		gridSelection.setWidth("500px");
 		gridSelection.setStyle("margin:0; padding:0;");
 		gridSelection.makeNoStrip();
@@ -239,7 +239,7 @@ public class WAttributeGrid extends ADForm implements EventListener
 	private Listbox 	pickWarehouse = new Listbox();
 	private ConfirmPanel confirmPanel = new ConfirmPanel(true);
 	//
-	private CustomGrid 		gridView = new CustomGrid();
+	private Grid 		gridView = new Grid();
 //	private CPanel		gridPanel = new CPanel(new BorderLayout());
 //	private CPanel		modePanel = new CPanel();
 	private Label		modeLabel = new Label(Msg.getMsg(Env.getCtx(), "Mode"));

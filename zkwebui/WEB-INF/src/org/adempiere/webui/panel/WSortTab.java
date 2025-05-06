@@ -26,7 +26,7 @@ import org.adempiere.controller.SortTabController;
 import org.adempiere.util.ListElement;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.CWindowToolbar;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridPanel;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListHead;
@@ -50,7 +50,6 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zul.Grid;
 import org.zkoss.zul.Vbox;
 import org.zkoss.zul.event.ListDataEvent;
 

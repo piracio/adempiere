@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.logging.Level;
 
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListItem;
@@ -164,7 +164,7 @@ public class WCreateFromInvoiceUI extends CreateFromInvoice
     	Panel parameterPanel = v_CreateFromPanel.getParameterPanel();
 		parameterPanel.appendChild(parameterLayout);
 		
-		CustomGrid parameterStdLayout = GridFactory.newGridLayout();
+		Grid parameterStdLayout = GridFactory.newGridLayout();
     	Panel parameterStdPanel = new Panel();
 		parameterStdPanel.appendChild(parameterStdLayout);
 

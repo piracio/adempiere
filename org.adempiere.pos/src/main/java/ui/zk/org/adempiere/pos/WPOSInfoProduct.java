@@ -19,7 +19,7 @@ package org.adempiere.pos;
 
 import org.adempiere.pos.services.ProductInfo;
 import org.adempiere.webui.component.Borderlayout;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -76,8 +76,8 @@ public class WPOSInfoProduct extends WPOSSubPanel {
 	/**	Product Tax			*/
 	private Label 		labelProductTax;
 	/** Grid Panel 			*/
-	private CustomGrid 		infoProductLayout;
-	private CustomGrid 		labelLayout;
+	private Grid 		infoProductLayout;
+	private Grid 		labelLayout;
 	private Panel 		buttonPanel;
 	/**
 	 * 

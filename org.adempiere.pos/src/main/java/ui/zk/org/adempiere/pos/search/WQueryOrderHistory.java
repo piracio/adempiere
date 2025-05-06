@@ -30,7 +30,7 @@ import org.adempiere.pos.services.POSQueryInterface;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Datebox;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListboxFactory;
@@ -119,7 +119,7 @@ public class WQueryOrderHistory extends WPOSQuery implements POSQueryInterface
 		Panel panel = new Panel();
 		setVisible(true);
 		Panel mainPanel = new Panel();
-		CustomGrid productLayout = GridFactory.newGridLayout();
+		Grid productLayout = GridFactory.newGridLayout();
 		
 		Groupbox groupPanel = new Groupbox();
 		Caption v_TitleBorder = new Caption(Msg.getMsg(ctx, QUERY));

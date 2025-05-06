@@ -19,7 +19,7 @@ import java.util.logging.Level;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.FolderBrowser;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Listbox;
@@ -79,7 +79,7 @@ public class WTranslationDialog extends TranslationController implements IFormCo
 	}
 	
 	private Panel centerPanel = new Panel();
-	private CustomGrid centerLayout = GridFactory.newGridLayout();
+	private Grid centerLayout = GridFactory.newGridLayout();
 	
 	private Button bExport = new Button();
 	private Button bImport = new Button();

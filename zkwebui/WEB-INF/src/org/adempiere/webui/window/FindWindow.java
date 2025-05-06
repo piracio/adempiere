@@ -46,7 +46,7 @@ import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListCell;
 import org.adempiere.webui.component.ListHead;
@@ -153,7 +153,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
     //
     private Listbox advancedPanel;
     /** container of Simple Window contents   */
-    private CustomGrid contentSimple;
+    private Grid contentSimple;
     /** Target Window No            */
     private int             m_targetWindowNo;
     /** Table ID                    */
@@ -362,7 +362,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
         pnlName.appendChild(LayoutUtils.makeRightAlign(lblName));
         pnlName.appendChild(fieldName);
 
-        contentSimple = new CustomGrid();
+        contentSimple = new Grid();
         contentSimple.setId("contentSimple");
         contentSimple.setWidth("100%");
         contentSimple.makeNoStrip();

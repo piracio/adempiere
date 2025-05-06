@@ -56,7 +56,7 @@ import org.zkoss.zk.ui.event.Events;
  *		@see https://github.com/adempiere/adempiere/issues/146
  */
 
-public class WLocatorEditor extends WEditor implements EventListener, PropertyChangeListener, ContextMenuListener, IZoomableEditor
+public class WLocatorEditor extends WEditor implements EventListener<Event>, PropertyChangeListener, ContextMenuListener, IZoomableEditor
 {
 	private static final String[] LISTENER_EVENTS = {Events.ON_CLICK};
     

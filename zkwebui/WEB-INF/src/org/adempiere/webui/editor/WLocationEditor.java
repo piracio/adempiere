@@ -59,7 +59,7 @@ import org.zkoss.zk.ui.event.Events;
  * 		@see FR [ 1158 ] Problems with location address: wrong region and not showing region field</a>
  * This class is based on VLocation written by Jorg Janke
  **/
-public class WLocationEditor extends WEditor implements EventListener, PropertyChangeListener, ContextMenuListener
+public class WLocationEditor extends WEditor implements EventListener<Event>, PropertyChangeListener, ContextMenuListener
 {
     private static final String[] LISTENER_EVENTS = {Events.ON_CLICK};
     

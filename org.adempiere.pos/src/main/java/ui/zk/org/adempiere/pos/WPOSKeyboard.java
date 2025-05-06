@@ -22,7 +22,7 @@ import java.util.HashMap;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -125,7 +125,7 @@ public class WPOSKeyboard extends Window implements POSKeyListener, EventListene
 		//	Content
 		Panel mainPanel = new Panel();
 		Borderlayout mainLayout = new Borderlayout();
-		CustomGrid productLayout = GridFactory.newGridLayout();
+		Grid productLayout = GridFactory.newGridLayout();
 		appendChild(panel);
 		
 		//	North

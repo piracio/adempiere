@@ -21,7 +21,7 @@ import java.util.logging.Level;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListItem;
@@ -172,7 +172,7 @@ public class WRecordAccessDialog extends Window implements EventListener
 		cbReadOnly.setText(Msg.translate(Env.getCtx(), "IsReadOnly"));
 		cbDependent.setText(Msg.translate(Env.getCtx(), "IsDependentEntities"));
 		
-		CustomGrid grid = GridFactory.newGridLayout();
+		Grid grid = GridFactory.newGridLayout();
 		this.appendChild(grid);
 		
 		Rows rows = new Rows();

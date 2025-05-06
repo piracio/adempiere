@@ -6,7 +6,7 @@ import java.util.List;
 import org.adempiere.model.IDocumentStatus;
 import org.adempiere.model.MDocumentStatus;
 import org.adempiere.webui.apps.AEnv;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
@@ -62,7 +62,7 @@ public class WDocumentStatusPanel extends Panel implements EventListener
 	 */
 	private void init()
 	{
-		CustomGrid grid = new CustomGrid();
+		Grid grid = new Grid();
 		appendChild(grid);
 		grid.setWidth("100%");
 		grid.setStyle("margin:0; padding:0; position: absolute;");

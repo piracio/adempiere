@@ -31,7 +31,7 @@ class GridTabRowRenderer_Test extends CommonUnitTestSetup {
     int numberOfRows = 100;
     ArrayList<Row> testRows = new ArrayList<>();
 
-    CustomGrid gridMock;
+    Grid gridMock;
     GridTab gridTabMock;
     Paging pagingMock;
     GridTabRowRenderer renderer;
@@ -39,7 +39,7 @@ class GridTabRowRenderer_Test extends CommonUnitTestSetup {
     @BeforeEach
     void setupRowsAndMocks() {
 
-        gridMock = mock(CustomGrid.class);
+        gridMock = mock(Grid.class);
         gridTabMock = mock(GridTab.class);
         pagingMock = mock(Paging.class);
 

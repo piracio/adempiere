@@ -16,7 +16,7 @@ import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -115,7 +115,7 @@ public class WMRPDetailed extends MRPDetailed implements IFormController, EventL
 	private Panel southPanel = new Panel();
 	private Borderlayout southLayout = new Borderlayout();
 	ConfirmPanel confirmPanel = new ConfirmPanel(true, true, true, true, true, true, true);
-	private CustomGrid parameterPanel = GridFactory.newGridLayout();
+	private Grid parameterPanel = GridFactory.newGridLayout();
 	
 
 	

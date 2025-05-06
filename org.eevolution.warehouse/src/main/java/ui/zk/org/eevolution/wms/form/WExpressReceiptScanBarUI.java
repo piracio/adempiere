@@ -26,7 +26,7 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListModelTable;
@@ -79,7 +79,7 @@ public class WExpressReceiptScanBarUI extends ExpressReceiptScanBar implements I
 	protected CustomForm form = new CustomForm();
     // new panel
     /** Grid for components*/
-    private CustomGrid newGrid = GridFactory.newGridLayout();
+    private Grid newGrid = GridFactory.newGridLayout();
 	
     protected Label locatorLabel = new Label();
 	protected WLocatorEditor locatorField = new WLocatorEditor();
@@ -118,7 +118,7 @@ public class WExpressReceiptScanBarUI extends ExpressReceiptScanBar implements I
     /** confirmation panel. */
     private ConfirmPanel m_pnlConfirm = new ConfirmPanel();
     /** Confirmation Grid. */
-    private CustomGrid m_grdConfirm = GridFactory.newGridLayout();
+    private Grid m_grdConfirm = GridFactory.newGridLayout();
 
     /**
      * Default constructor.

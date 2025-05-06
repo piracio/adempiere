@@ -124,7 +124,7 @@ public class GridPanel extends Borderlayout implements EventListener<Event>
 
     // The following fields require package or protected level of
     // visibility for testing
-    CustomGrid listbox;
+    Grid listbox;
     GridTabRowRenderer renderer;
     AbstractADWindowPanel windowPanel;
     
@@ -149,7 +149,7 @@ public class GridPanel extends Borderlayout implements EventListener<Event>
 	public GridPanel(int windowNo)
 	{
 		this.windowNo = windowNo;
-		listbox = new CustomGrid();
+		listbox = new Grid();
 		
 		listbox.addEventListener(Events.ON_FOCUS, this);
 		listbox.setOddRowSclass(null);
@@ -814,7 +814,7 @@ public class GridPanel extends Borderlayout implements EventListener<Event>
 	/**
 	 * @return Grid
 	 */
-	public CustomGrid getListbox() {
+	public Grid getListbox() {
 		return listbox;
 	}
 
@@ -997,7 +997,7 @@ public class GridPanel extends Borderlayout implements EventListener<Event>
 	
 	protected void createListbox()
 	{
-		listbox = new CustomGrid();
+		listbox = new Grid();
 		listbox.setOddRowSclass(null);
 		listbox.setVflex(true);
 	} // createListbox

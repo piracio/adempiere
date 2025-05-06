@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import org.adempiere.controller.SmallViewEditable;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -78,7 +78,7 @@ public class WBrowserSearch extends BrowserSearch implements SmallViewEditable {
 	private Rows 	rows;
 	private Row		currentRow;
 	//
-	private CustomGrid 	centerPanel;
+	private Grid 	centerPanel;
 	private Panel	mainPanel;
 
 	/**

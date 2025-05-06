@@ -30,7 +30,7 @@ import org.adempiere.exceptions.ValueChangeListener;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListModelTable;
@@ -112,7 +112,7 @@ public class WLoanSimulator extends org.spin.investment.form.LoanSimulator
 	private Label userLabel = new Label();
 	private WTableDirEditor userField;
 	private WNumberEditor financialRateField;
-	private CustomGrid parameterLayout = GridFactory.newGridLayout();
+	private Grid parameterLayout = GridFactory.newGridLayout();
 	private Panel southPanel = new Panel();
 	private Button calculateButton = null;
 	private ConfirmPanel confirmPanel = new ConfirmPanel(true, false, false, false, false, false, false);

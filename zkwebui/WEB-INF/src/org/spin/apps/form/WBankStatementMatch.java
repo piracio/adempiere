@@ -26,7 +26,7 @@ import org.adempiere.exceptions.ValueChangeEvent;
 import org.adempiere.exceptions.ValueChangeListener;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListModelTable;
@@ -127,7 +127,7 @@ public class WBankStatementMatch extends BankStatementMatchController
 	private Borderlayout mainLayout = new Borderlayout();
 	private Panel parameterPanel = new Panel();
 	private Panel actionPanel = new Panel();
-	private CustomGrid parameterLayout = GridFactory.newGridLayout();
+	private Grid parameterLayout = GridFactory.newGridLayout();
 	private Label bpartnerLabel = new Label();
 	private WSearchEditor bpartnerSearch = null;
 	private Label dateFromLabel = new Label();
@@ -162,7 +162,7 @@ public class WBankStatementMatch extends BankStatementMatchController
 	private Borderlayout centerPaymentLayout = new Borderlayout();
 	private Label paymentInfo = new Label();
 	private Label invoiceInfo = new Label();
-	private CustomGrid actionLayout = GridFactory.newGridLayout();
+	private Grid actionLayout = GridFactory.newGridLayout();
 	private WTableDirEditor bankAccountField = null;
 	private StatusBarPanel statusBar = new StatusBarPanel();
 	

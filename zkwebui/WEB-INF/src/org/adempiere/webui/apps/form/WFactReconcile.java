@@ -37,7 +37,7 @@ import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListModelTable;
@@ -134,7 +134,7 @@ public class WFactReconcile extends CustomForm
 
 	//
 	private Borderlayout mainPanel = new Borderlayout(); 
-	private CustomGrid parameterGrid = GridFactory.newGridLayout();
+	private Grid parameterGrid = GridFactory.newGridLayout();
 	private Borderlayout parameterPanel = new Borderlayout();  
 	private Borderlayout commandPanel = new Borderlayout(); // To hold the buttons and status bar
 	private Hbox commandPane; // To hold the buttons

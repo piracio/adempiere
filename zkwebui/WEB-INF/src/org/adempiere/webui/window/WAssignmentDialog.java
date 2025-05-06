@@ -33,7 +33,7 @@ import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListItem;
 import org.adempiere.webui.component.Listbox;
@@ -127,7 +127,7 @@ public class WAssignmentDialog extends Window implements EventListener
 	private HashMap<KeyNamePair,KeyNamePair>	m_lookup = new HashMap<KeyNamePair,KeyNamePair>();
 	
 	//
-	private CustomGrid mainPanel = new CustomGrid();
+	private Grid mainPanel = new Grid();
 	private Label lResource = new Label(Msg.translate(Env.getCtx(), "S_Resource_ID"));
 	private Listbox fResource = new Listbox(getResources());
 	private Label lDate = new Label(Msg.translate(Env.getCtx(), "DateFrom"));

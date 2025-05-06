@@ -24,7 +24,7 @@ import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.apps.BusyDialog;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.DesktopTabpanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.ListboxFactory;
 import org.adempiere.webui.component.Tab;
@@ -81,7 +81,7 @@ public class WGenForm extends ADForm implements EventListener, WTableModelListen
 	//
 	private Tabbox tabbedPane = new Tabbox();
 	private Borderlayout selPanel = new Borderlayout();
-	private CustomGrid selNorthPanel = GridFactory.newGridLayout();
+	private Grid selNorthPanel = GridFactory.newGridLayout();
 	private ConfirmPanel confirmPanelSel = new ConfirmPanel(true);
 	private ConfirmPanel confirmPanelGen = new ConfirmPanel(false, true, false, false, false, false, false);
 	private StatusBarPanel statusBar = new StatusBarPanel();
@@ -421,7 +421,7 @@ public class WGenForm extends ADForm implements EventListener, WTableModelListen
 		SessionManager.getAppDesktop().closeActiveWindow();
 	}
 	
-	public CustomGrid getParameterPanel()
+	public Grid getParameterPanel()
 	{
 		return selNorthPanel;
 	}

@@ -29,7 +29,7 @@ import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.component.*;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.MyDefaulTreeModel;
@@ -108,7 +108,7 @@ public class ADTabPanel extends Div implements Evaluatee, EventListener, DataSta
 
     public int               windowNo;
 
-    public CustomGrid              grid;
+    public Grid              grid;
 
     private ArrayList<WEditor> editors = new ArrayList<WEditor>();
 
@@ -175,7 +175,7 @@ public class ADTabPanel extends Div implements Evaluatee, EventListener, DataSta
     private void initComponents()
     {
     	LayoutUtils.addSclass("adtab-content", this);
-        grid = new CustomGrid();
+        grid = new Grid();
         //have problem moving the following out as css class
         grid.setWidth("100%");
         grid.setHeight("100%");
@@ -1873,7 +1873,7 @@ public class ADTabPanel extends Div implements Evaluatee, EventListener, DataSta
         //creating Object to PanelChildren class
         ep.panelChildren = new Panelchildren();
         // Creating a Object to Grid And Apply Properties
-        CustomGrid newGrid = new CustomGrid();
+        Grid newGrid = new Grid();
         newGrid.setVflex(true);
         newGrid.setStyle("margin:0; padding:0; position: absolute; border: none;");
         newGrid.makeNoStrip();

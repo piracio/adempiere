@@ -22,7 +22,7 @@ import java.util.logging.Level;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -91,7 +91,7 @@ public class WStocktake extends Stocktake
 	private Label aislexLabel = new Label();
 	private WTableDirEditor aislexField;
 	private Checkbox secondCount = new Checkbox();
-	private CustomGrid parameterLayout = GridFactory.newGridLayout();
+	private Grid parameterLayout = GridFactory.newGridLayout();
 	private Panel southPanel = new Panel();
 	private ConfirmPanel confirmPanel = new ConfirmPanel(true, true, false, true, false, false, false);
 	private StatusBarPanel statusBar = new StatusBarPanel();

@@ -25,7 +25,7 @@ import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Listbox;
@@ -145,7 +145,7 @@ public class WMatch extends Match
 	private StatusBarPanel statusBar = new StatusBarPanel();
 	private Borderlayout mainLayout = new Borderlayout();
 	private Panel northPanel = new Panel();
-	private CustomGrid northLayout = GridFactory.newGridLayout();
+	private Grid northLayout = GridFactory.newGridLayout();
 	private Label matchFromLabel = new Label();
 	private Listbox matchFrom = ListboxFactory.newDropdownListbox(m_matchOptions);
 	private Label matchToLabel = new Label();
@@ -162,7 +162,7 @@ public class WMatch extends Match
 	private WDateEditor dateTo = new WDateEditor("DateTo", false, false, true, "DateTo");
 	private Button bSearch = new Button();
 	private Panel southPanel = new Panel();
-	private CustomGrid southLayout = GridFactory.newGridLayout();
+	private Grid southLayout = GridFactory.newGridLayout();
 	private Label xMatchedLabel = new Label();
 	private Label xMatchedToLabel = new Label();
 	private Label differenceLabel = new Label();

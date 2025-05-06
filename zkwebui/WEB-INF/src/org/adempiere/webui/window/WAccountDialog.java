@@ -26,7 +26,7 @@ import org.adempiere.exceptions.ValueChangeListener;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.CWindowToolbar;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
@@ -161,7 +161,7 @@ public final class WAccountDialog extends Window
 	private StatusBarPanel statusBar = new StatusBarPanel();
 	private Hbox northPanel = new Hbox();
 	private Groupbox parameterPanel = new Groupbox();
-	private CustomGrid parameterLayout = new CustomGrid();
+	private Grid parameterLayout = new Grid();
 	private ToolBar toolBar = new ToolBar();
 	private ToolBarButton bRefresh = new ToolBarButton();
 	private ToolBarButton bSave = new ToolBarButton();

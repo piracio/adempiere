@@ -55,7 +55,7 @@ import org.zkoss.zul.Image;
  * @date    Mar 11, 2007
  * @version $Revision: 0.10 $
  */
-public abstract class WEditor implements CEditor, EventListener, PropertyChangeListener
+public abstract class WEditor implements CEditor, EventListener<Event>, PropertyChangeListener
 {
     private static final String[] LISTENER_EVENTS = {};
 
@@ -241,7 +241,7 @@ public abstract class WEditor implements CEditor, EventListener, PropertyChangeL
         {
             component.addEventListener(event, this);
         }
-        component.addEventListener(Events.ON_FOCUS, new EventListener() {
+        component.addEventListener(Events.ON_FOCUS, new EventListener<Event>() {
 			public void onEvent(Event event) throws Exception {
 				hasFocus = true;
 				if(gridTab!=null)
@@ -260,7 +260,7 @@ public abstract class WEditor implements CEditor, EventListener, PropertyChangeL
 			}
 
         });
-        component.addEventListener(Events.ON_BLUR, new EventListener() {
+        component.addEventListener(Events.ON_BLUR, new EventListener<Event>() {
 			public void onEvent(Event event) throws Exception {
 				hasFocus = false;
 				if(getGridField() != null) {

@@ -31,7 +31,7 @@ import org.adempiere.exceptions.ValueChangeEvent;
 import org.adempiere.exceptions.ValueChangeListener;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
@@ -98,7 +98,7 @@ public class WBOMDrop extends ADForm implements BOMDropForm, EventListener, Valu
 	private ArrayList<Object> optionGroups = new ArrayList<Object>();
 	
 	private ConfirmPanel confirmPanel = new ConfirmPanel(true);
-	private CustomGrid selectionPanel = GridFactory.newGridLayout();
+	private Grid selectionPanel = GridFactory.newGridLayout();
 	
 	private Groupbox selectBOMPanel = new Groupbox();
 	

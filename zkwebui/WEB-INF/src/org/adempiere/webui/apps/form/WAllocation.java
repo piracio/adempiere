@@ -24,7 +24,7 @@ import org.adempiere.exceptions.ValueChangeEvent;
 import org.adempiere.exceptions.ValueChangeListener;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
-import org.adempiere.webui.component.CustomGrid;
+import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListModelTable;
@@ -139,7 +139,7 @@ public class WAllocation extends Allocation
 	private Borderlayout mainLayout = new Borderlayout();
 	private Panel parameterPanel = new Panel();
 	private Panel allocationPanel = new Panel();
-	private CustomGrid parameterLayout = GridFactory.newGridLayout();
+	private Grid parameterLayout = GridFactory.newGridLayout();
 	private Label bpartnerLabel = new Label();
 	private WSearchEditor bpartnerSearch = null;
 	private WListbox invoiceTable = ListboxFactory.newDataTable();
@@ -157,7 +157,7 @@ public class WAllocation extends Allocation
 	private Borderlayout invoiceLayout = new Borderlayout();
 	private Label paymentInfo = new Label();
 	private Label invoiceInfo = new Label();
-	private CustomGrid allocationLayout = GridFactory.newGridLayout();
+	private Grid allocationLayout = GridFactory.newGridLayout();
 	private Label differenceLabel = new Label();
 	private Textbox differenceField = new Textbox();
 	private Label descriptionLabel = new Label();
