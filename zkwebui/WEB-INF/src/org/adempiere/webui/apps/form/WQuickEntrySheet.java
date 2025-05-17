@@ -154,7 +154,7 @@ public class WQuickEntrySheet extends Window implements EventListener, DataStatu
 		selPanel.setHeight("99%");
 
 		North north = new North();
-		north.setFlex(true);
+		north.setHflex("1");
 		north.setStyle("border: none");
 		north.appendChild(selNorthPanel);
 		selPanel.appendChild(north);
@@ -162,7 +162,7 @@ public class WQuickEntrySheet extends Window implements EventListener, DataStatu
 		Center center = new Center();
 
 		center.appendChild(gridPanel);
-		center.setFlex(true);
+		center.setHflex("1");
 		selPanel.appendChild(center);
 
 		selSouthPanel.addActionListener(this);

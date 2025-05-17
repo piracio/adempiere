@@ -152,7 +152,7 @@ public class SMJReportViewer extends Window implements EventListener {
 				north.appendChild(toolBar);
 				
 				Center center = new Center();
-				center.setFlex(true);
+				center.setHflex("1");
 				layout.appendChild(center);
 				iframe = new Iframe();
 				iframe.setId("reportFrame");

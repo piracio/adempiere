@@ -218,7 +218,7 @@ public class WStocktake extends Stocktake
 			m_gridController.switchRowPresentation();
 		Center center = new Center();
 		mainLayout.appendChild(center);
-		center.setFlex(true);
+		center.setHflex("1");
 		center.appendChild(m_gridController);
 	}   //  dynInit
 

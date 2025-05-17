@@ -148,7 +148,7 @@ public class WPAttributeInstance extends Window implements EventListener
 		//	Center
 		Center center = new Center();
 		center.setParent(mainLayout);
-		center.setFlex(true);
+		center.setHflex("1");
 		center.appendChild(m_table);
 		
 		//	South

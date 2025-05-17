@@ -139,7 +139,7 @@ public class InfoPAttributePanel extends Window implements EventListener
 		Borderlayout layout = new Borderlayout();
 		Center center = new Center();
 		layout.appendChild(center);
-		center.setFlex(true);
+		center.setHflex("1");
 		center.setAutoscroll(true);
 		center.setStyle("border: none");
 		this.appendChild(layout);

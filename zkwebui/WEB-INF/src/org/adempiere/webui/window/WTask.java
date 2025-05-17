@@ -174,7 +174,7 @@ public class WTask extends Window implements EventListener
 		div.setStyle("width: 100%; height:100%; overflow: auto");
 		div.appendChild(info);
 		center.appendChild(div);
-		center.setFlex(true);
+		center.setHflex("1");
 
 		South south = new South();
 		layout.appendChild(south);

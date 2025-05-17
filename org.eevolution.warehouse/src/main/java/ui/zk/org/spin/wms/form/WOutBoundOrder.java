@@ -414,7 +414,7 @@ public class WOutBoundOrder extends OutBoundOrder
 		stockLayout.appendChild(north);
 		north.setTitle(Msg.translate(Env.getCtx(), "WarehouseStockGroup"));
 		north.appendChild(invoiceLabel);
-		north.setFlex(true);
+		north.setHflex("1");
 		south = new South();
 		south.setStyle("border: none");
 		south.appendChild(stockInfo.rightAlign());
@@ -427,7 +427,7 @@ public class WOutBoundOrder extends OutBoundOrder
 		center.setStyle("border: 1px solid #000; height:50%");
 		north = new North();
 		north.setStyle("border: none; height:90%;");
-		north.setFlex(true);
+		north.setHflex("1");
 		medioLayout.appendChild(north);
 		north.appendChild(orderLineTable);
 		southAdded = new South();
@@ -439,7 +439,7 @@ public class WOutBoundOrder extends OutBoundOrder
 		southAdded.addEventListener("onClick", this);
 		southAdded.setHeight("50%");
 		southAdded.setZIndex(99);
-		southAdded.setFlex(true);
+		southAdded.setHflex("1");
 		southAdded.setCollapsible(true);
 		southAdded.setOpen(false);
 		southAdded.setSplittable(true);
@@ -459,7 +459,7 @@ public class WOutBoundOrder extends OutBoundOrder
 		infoLayout.appendChild(north);
 		north.appendChild(orderLayout);
 		north.setSplittable(true);
-		north.setFlex(true);
+		north.setHflex("1");
 		
 		center = new Center();
 		center.setStyle("border: none");

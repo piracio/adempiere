@@ -126,7 +126,7 @@ public class ZkJRViewer extends Window implements EventListener {
 		north.appendChild(toolbar);
 
 		Center center = new Center();
-		center.setFlex(true);
+		center.setHflex("1");
 		layout.appendChild(center);
 		iframe = new Iframe();
 		iframe.setId(jasperPrint.getName());

@@ -363,7 +363,7 @@ public class ZkReportViewer extends Window implements EventListener {
 		North north = new North();
 		north.setParent(layout);
 		north.setCollapsible(false);
-		north.setFlex(true);
+		north.setHflex("1");
 
 		Vbox box = new Vbox();
 		box.setWidth("100%");
@@ -371,7 +371,7 @@ public class ZkReportViewer extends Window implements EventListener {
 		box.setParent(north);
 
 		Center center = new Center();
-		center.setFlex(true);
+		center.setHflex("1");
 		layout.appendChild(center);
 		iframe = new Iframe();
 		iframe.setId("reportFrame");

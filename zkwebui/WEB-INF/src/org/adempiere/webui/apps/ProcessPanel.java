@@ -219,7 +219,7 @@ public class ProcessPanel extends ProcessController implements SmallViewEditable
 		centerPanel = new Center();
 		mainLayout.appendChild(centerPanel);
 		centerPanel.appendChild(parameterPanel);
-		centerPanel.setFlex(false);
+		centerPanel.setHflex("0");
 		//	FR [ 1051 ]
 		centerPanel.setStyle("border: none; overflow-y:auto;width:98%");
 		

@@ -229,7 +229,7 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener,
 		dataPane.appendChild(tableBOM);
 		tableBOM.setVflex(true);
 		tableBOM.setFixedLayout(true);
-		center.setFlex(true);
+		center.setHflex("1");
 		center.setAutoscroll(true);
 	}
 	

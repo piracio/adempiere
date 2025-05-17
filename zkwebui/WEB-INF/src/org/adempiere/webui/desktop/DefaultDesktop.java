@@ -162,7 +162,7 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
         w.setCollapsible(true);
         w.setSplittable(true);
         w.setTitle(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Menu")));
-        w.setFlex(true);
+		w.setHflex("1");
         w.addEventListener(Events.ON_OPEN, new EventListener() {			
 			@Override
 			public void onEvent(Event event) throws Exception {
@@ -179,7 +179,7 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 
         windowArea = new Center();
         windowArea.setParent(layout);
-        windowArea.setFlex(true);
+		windowArea.setHflex("1");
 
         windowContainer.createPart(windowArea);
 

@@ -179,7 +179,7 @@ public class WBOMDrop extends ADForm implements BOMDropForm, EventListener, Valu
 		Center center = new Center();
 		center.appendChild(selectBOMItemsPanel); 
 		center.setBorder("none");
-		center.setFlex(true);
+		center.setHflex("1");
 		center.setAutoscroll(true);
 		mainLayout.appendChild(center);
 

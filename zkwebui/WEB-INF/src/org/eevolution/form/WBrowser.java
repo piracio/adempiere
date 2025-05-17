@@ -229,7 +229,7 @@ public class WBrowser extends Browser implements IFormController,
 				south.setBorder("none");
 				
 				south.setAutoscroll(true);
-				south.setFlex(true);
+				south.setHflex("1");
 				south.setCollapsible(true);
 				south.setTitle(Msg.getMsg(Env.getCtx(),("Parameter")));
 				south.setCollapsible(true);
@@ -564,7 +564,7 @@ public class WBrowser extends Browser implements IFormController,
 		dCenter.setBorder("none");
 		detail.setVflex(true);
 		detail.setFixedLayout(true);
-		dCenter.setFlex(true);
+		dCenter.setHflex("1");
 		dCenter.setAutoscroll(true);
 		
 		detailPanel.setHeight("100%");

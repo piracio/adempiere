@@ -125,7 +125,7 @@ public class WFileImport extends FileImportController implements IFormController
 			layout.appendChild(north);
 			north.appendChild(northPanel);
 			Center center = new Center();
-			center.setFlex(true);
+			center.setHflex("1");
 			layout.appendChild(center);
 			center.appendChild(centerPanel);
 			South south = new South();

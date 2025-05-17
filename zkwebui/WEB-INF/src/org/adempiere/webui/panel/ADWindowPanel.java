@@ -168,7 +168,6 @@ public class ADWindowPanel extends AbstractADWindowPanel
 		        layout.appendChild(east);
 		        east.setSplittable(false);
 		        east.setAutoscroll(true);
-		        //east.setFlex(true);
 		        east.setHflex("1");
 		        east.setVflex("1");
 		        LayoutUtils.addSclass("adwindow-nav adwindow-right-nav", east);
@@ -187,7 +186,6 @@ public class ADWindowPanel extends AbstractADWindowPanel
         contentArea = new Center();
         contentArea.setParent(layout);
         contentArea.setAutoscroll(true);
-        //contentArea.setFlex(true);
         contentArea.setHflex("1");
         contentArea.setVflex("1");
         adTab.createPart(contentArea);

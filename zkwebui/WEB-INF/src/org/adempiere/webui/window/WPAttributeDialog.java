@@ -212,7 +212,7 @@ public class WPAttributeDialog extends Window implements EventListener
 		
 		Center center = new Center();
 		center.setParent(mainLayout);
-		center.setFlex(true);
+		center.setHflex("1");
 		center.appendChild(centerPanel);
 
 		South south = new South();

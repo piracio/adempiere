@@ -473,11 +473,11 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 		div.setStyle("width :100%; height: 100%");
 		p_centerCenter.appendChild(div);
 		p_centerCenter.setAutoscroll(false);
-        p_centerCenter.setFlex(true);
+        p_centerCenter.setHflex("1");
 		//
 		p_centerSouth.setCollapsible(true);
 		p_centerSouth.setSplittable(true);
-		p_centerSouth.setFlex(true);
+		p_centerSouth.setHflex("1");
 
 		//  Setup the north reset button and criteria grid
 		West spWest = new West();

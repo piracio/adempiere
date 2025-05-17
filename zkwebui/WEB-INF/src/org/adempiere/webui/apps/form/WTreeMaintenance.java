@@ -162,7 +162,7 @@ public class WTreeMaintenance extends TreeMaintenance implements IFormController
 		Center center = new Center();
 		mainLayout.appendChild(center);	
 		center.appendChild(centerTree);
-		center.setFlex(true);
+		center.setHflex("1");
 		center.setAutoscroll(true);
 		
 		East east = new East();

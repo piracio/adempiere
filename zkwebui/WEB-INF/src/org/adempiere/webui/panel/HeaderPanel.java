@@ -86,7 +86,7 @@ public class HeaderPanel extends Panel implements EventListener
     	userPanel.setWidth("100%");
     	userPanel.setHeight("100%");
     	userPanel.setStyle("position: absolute");
-    	center.setFlex(true);
+		center.setHflex("1");
     	LayoutUtils.addSclass("desktop-header-right", center);
     	//the following doesn't work when declare as part of the header-right style
     	center.setStyle("background-color: transparent; border: none;");

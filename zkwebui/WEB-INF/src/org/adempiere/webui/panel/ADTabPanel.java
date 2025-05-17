@@ -234,7 +234,7 @@ public class ADTabPanel extends Div implements Evaluatee, EventListener, DataSta
 			layout.appendChild(west);
 
 			Center center = new Center();
-			center.setFlex(true);
+			center.setHflex("1");
 			center.appendChild(grid);
 			layout.appendChild(center);
 

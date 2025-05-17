@@ -207,7 +207,7 @@ public class WExpressReceiptScanBarUI extends ExpressReceiptScanBar implements I
 
 		Center center = new Center();
 		center.setBorder("none");
-		center.setFlex(true);
+		center.setHflex("1");
 		center.setAutoscroll(true);
 		borderlayout.appendChild(center);
 		center.appendChild(productTable);

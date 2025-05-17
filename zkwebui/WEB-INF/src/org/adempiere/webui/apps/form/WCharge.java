@@ -261,7 +261,7 @@ public class WCharge extends Charge implements IFormController, EventListener
 
 		Center center = new Center();
 		center.setBorder("none");
-		center.setFlex(true);
+        center.setHflex("1");
 		center.setAutoscroll(true);
 		borderlayout.appendChild(center);
 		center.appendChild(m_tblData);

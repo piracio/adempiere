@@ -143,7 +143,7 @@ public class WRecordInfo extends RecordInfoController implements EventListener
 		
 		Center center = new Center();
 		center.setParent(layout);
-		center.setFlex(true);
+		center.setHflex("1");
 		if (isOk())
 		{
 			North north = new North();

@@ -220,7 +220,7 @@ public class WHRActionNotice extends HRActionNotice implements IFormController,
 		row.appendChild(bOk);
 		//	
 		Center center = new Center();
-		center.setFlex(true);
+		center.setHflex("1");
 		center.appendChild(miniTable);
 		mainLayout.appendChild(center);
 		miniTable.setVflex(true);

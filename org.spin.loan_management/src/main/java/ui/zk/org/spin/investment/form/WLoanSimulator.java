@@ -292,7 +292,7 @@ public class WLoanSimulator extends org.spin.investment.form.LoanSimulator
 		//
 		Center center = new Center();
 		mainLayout.appendChild(center);
-		center.setFlex(true);
+		center.setHflex("1");
 		center.appendChild(miniTable);
 		miniTable.setVflex(true);
 		miniTable.setFixedLayout(true);
