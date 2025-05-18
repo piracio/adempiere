@@ -23,10 +23,9 @@
 		<debug-js>false</debug-js>
 	</client-config>
 
-	<!--
-		<language-config> <addon-uri>/WEB-INF/lang-addon.xml</addon-uri>
-		</language-config>
-	-->
+	<language-config>
+		<addon-uri>/WEB-INF/classes/metainfo/zk/lang-addon.xml</addon-uri>
+	</language-config>
 
 	<session-config>
 		<device-type>ajax</device-type>

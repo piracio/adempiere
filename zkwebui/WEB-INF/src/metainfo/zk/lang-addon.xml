@@ -22,6 +22,15 @@ Copyright (C) 2007 Ashley G Ramdass (ADempiere WebUI).
 		<version-uid>3.5</version-uid>
 	</version>
 
+	<addon-name>Keylistener</addon-name>
+	<language-name>xul/html</language-name>
+	<component>
+	        <component-name>keylistener</component-name>
+		<component-class>org.zkforge.keylistener.Keylistener</component-class>
+		<widget-class>zul.KeyListener</widget-class>
+	</component>
+	<javascript src="/js/zul/keylistener/keylistener.js"/>
+
 	<javascript src="/js/calc.js" charset="UTF-8"/>
 	<javascript src="/js/layout.js" charset="UTF-8"/>
 	<javascript src="/js/report.js" charset="UTF-8"/>	
