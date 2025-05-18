@@ -25,477 +25,323 @@ import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.apps.AEnv;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
-import org.zkoss.zhtml.Table;
-import org.zkoss.zhtml.Td;
-import org.zkoss.zhtml.Tr;
+import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zul.Button;
 import org.zkoss.zul.Decimalbox;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Popup;
+import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Vbox;
 
 /**
+ * Refactored NumberBox for ZK 6.5+
  *
- * @author  <a href="mailto:agramdass@gmail.com">Ashley G Ramdass</a>
- * @date    Mar 11, 2007
- * @version $Revision: 0.10 $
- * @author Low Heng Sin
- * @author Yamel Senih, ysenih@erpcya.com, ERPCyA http://www.erpcya.com
- * 		<li><a href="https://github.com/adempiere/adempiere/issues/547">
- * 		FR [ 547 ] Bad align in Number box ZK</a>
+ * Provides a numeric input with an optional calculator popup.
  */
-public class NumberBox extends Div
-{
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 7089099079981906933L;
+public class NumberBox extends Div {
+    private static final long serialVersionUID = 7089099079981906933L;
 
-	private Textbox txtCalc = new Textbox();
-    
-    boolean integral = false;
-    
-    NumberFormat format = null;
-    
+    private Textbox txtCalc;
+    private boolean integral = false;
+    private NumberFormat format = null;
     private Decimalbox decimalBox = null;
     private Button btn;
-
     private Object m_oldValue = null;
-
     private boolean btnEnabled = true;
+    private Popup popup;
 
-	private Popup popup;
-    
-    /**
-     * 
-     * @param integral
-     */
-    public NumberBox(boolean integral)
-    {
+    public NumberBox(boolean integral) {
         super();
         this.integral = integral;
         init();
     }
-    
-    /**
-     * @return popup
-     */
-    public Popup getPopupMenu()
-    {
-    	return popup;
-    }
-    private void init()
-    {
-    	Table grid = new Table();
-		appendChild(grid);
-		grid.setStyle("border: none; padding: 0px; margin: 0px;");
-		grid.setDynamicProperty("border", "0");
-		grid.setDynamicProperty("cellpadding", "0");
-		grid.setDynamicProperty("cellspacing", "0");
-		
-		Tr tr = new Tr();
-		grid.appendChild(tr);
-		tr.setStyle("border: none; padding: 0px; margin: 0px; white-space:nowrap; ");
 
-		Td td = new Td();
-		tr.appendChild(td);
-		td.setStyle("border: none; padding: 0px; margin: 0px;");
-		decimalBox = new Decimalbox();
-    	if (integral)
-    		decimalBox.setScale(0);
-    	//	FR 547
-    	decimalBox.setStyle("display: inline; text-align: right; padding-right: 2px");
-		td.appendChild(decimalBox);
-		
-		Td btnColumn = new Td();
-		tr.appendChild(btnColumn);
-		btnColumn.setStyle("border: none; padding: 0px; margin: 0px;");
-		btnColumn.setSclass("editor-button");
-		btn = new Button();
-        btn.setImage("/images/Calculator10.png");
-		btn.setTabindex(-1);
-		LayoutUtils.addSclass("editor-button", btn);
-		btnColumn.appendChild(btn);
-        
-        popup = getCalculatorPopup();
-        LayoutUtils.addSclass("editor-button", btn);
-        btn.setPopup(popup);
-        btn.setStyle("text-align: center;");
-        appendChild(popup);
-     
-        String style = AEnv.isFirefox2() ? "display: inline" : "display: inline-block"; 
-        style = style + ";white-space:nowrap";
-        this.setStyle(style);	     
-    }
-    
-    /**
-     * 
-     * @param format
-     */
-    public void setFormat(NumberFormat format)
-    {
-    	this.format = format;
-    }
-    
-    /**
-     * 
-     * @param value
-     */
-    public void setValue(Object value)
-    {
-    	if (value == null)
-    		decimalBox.setValue((BigDecimal) null);
-    	else if (value instanceof BigDecimal)
-    		decimalBox.setValue((BigDecimal) value);
-    	else if (value instanceof Number)
-    		decimalBox.setValue(BigDecimal.valueOf(((Number)value).doubleValue()));
-    	else
-    		decimalBox.setValue(new BigDecimal(value.toString()));
-    }
-    
-    
-    /**
-     * 
-     * @return BigDecimal
-     */
-    public BigDecimal getValue()
-    {
-    	return decimalBox.getValue();
-    }
-    
-    /**
-     * 
-     * @return text
-     */
-    public String getText()
-    {
-    	BigDecimal value = decimalBox.getValue();
-    	if (value == null) return null;
-    	
-    	if (format != null)
-    		return format.format(value);
-    	else
-    		return value.toPlainString();
-    }
-    
-    /**
-     * 
-     * @param value
-     */
-    public void setValue(String value)
-    {
-    	Number numberValue = null;
-    	
-    	if (format != null)
-    	{
-    		try
-			{
-    			numberValue = format.parse(value);
-    			setValue(numberValue);
-			}
-			catch (ParseException e)
-			{
-			}
-    	}
-    	else
-    	{
-    		decimalBox.setValue(new BigDecimal(value));
-    	}    	
-    }
-    
-    private Popup getCalculatorPopup()
-    {
-        Popup popup = new Popup(); 
-
-        Vbox vbox = new Vbox();
-
-        char separatorChar = DisplayType.getNumberFormat(DisplayType.Number, Env.getLanguage(Env.getCtx())).getDecimalFormatSymbols().getDecimalSeparator();
-        String separator = Character.toString(separatorChar);
-
-        txtCalc = new Textbox();
-        txtCalc.setAction("onKeyPress : return calc.validate('" + 
-        		decimalBox.getId() + "','" + txtCalc.getId() 
-                + "'," + integral + "," + (int)separatorChar + ", event);");
-        txtCalc.setMaxlength(250);
-        txtCalc.setCols(30);
-        
-        String txtCalcId = txtCalc.getId();
-
-        vbox.appendChild(txtCalc);
-        Hbox row1 = new Hbox();
-
-        Button btnAC = new Button();
-        btnAC.setWidth("40px");
-        btnAC.setLabel("AC");
-        btnAC.setAction("onClick : calc.clearAll('" + txtCalcId + "')");
-
-        Button btn7 = new Button();
-        btn7.setWidth("30px");
-        btn7.setLabel("7");
-        btn7.setAction("onClick : calc.append('" + txtCalcId + "', '7')");
-
-        Button btn8 = new Button();
-        btn8.setWidth("30px");
-        btn8.setLabel("8");
-        btn8.setAction("onClick : calc.append('" + txtCalcId + "', '8')");
-
-        Button btn9 = new Button();
-        btn9.setWidth("30px");
-        btn9.setLabel("9");
-        btn9.setAction("onClick : calc.append('" + txtCalcId + "', '9')");
-
-        Button btnMultiply = new Button();
-        btnMultiply.setWidth("30px");
-        btnMultiply.setLabel("*");
-        btnMultiply.setAction("onClick : calc.append('" + txtCalcId + "', ' * ')");
-
-        row1.appendChild(btnAC);
-        row1.appendChild(btn7);
-        row1.appendChild(btn8);
-        row1.appendChild(btn9);
-        row1.appendChild(btnMultiply);
-
-        Hbox row2 = new Hbox();
-
-        Button btnC = new Button();
-        btnC.setWidth("40px");
-        btnC.setLabel("C");
-        btnC.setAction("onClick : calc.clear('" + txtCalcId + "')");
-        
-        Button btn4 = new Button();
-        btn4.setWidth("30px");
-        btn4.setLabel("4");
-        btn4.setAction("onClick : calc.append('" + txtCalcId + "', '4')");
-
-        Button btn5 = new Button();
-        btn5.setWidth("30px");
-        btn5.setLabel("5");
-        btn5.setAction("onClick : calc.append('" + txtCalcId + "', '5')");
-
-        Button btn6 = new Button();
-        btn6.setWidth("30px");
-        btn6.setLabel("6");
-        btn6.setAction("onClick : calc.append('" + txtCalcId + "', '6')");
-        
-        Button btnDivide = new Button();
-        btnDivide.setWidth("30px");
-        btnDivide.setLabel("/");
-        btnDivide.setAction("onClick : calc.append('" + txtCalcId + "', ' / ')");
-
-        row2.appendChild(btnC);
-        row2.appendChild(btn4);
-        row2.appendChild(btn5);
-        row2.appendChild(btn6);
-        row2.appendChild(btnDivide);
-
-        Hbox row3 = new Hbox();
-
-        Button btnModulo = new Button();
-        btnModulo.setWidth("40px");
-        btnModulo.setLabel("%");
-        btnModulo.setAction("onClick : calc.percentage('" + decimalBox.getId() + "','" 
-                + txtCalcId + "','" + separator + "')");
-        
-        
-        Button btn1 = new Button();
-        btn1.setWidth("30px");
-        btn1.setLabel("1");
-        btn1.setAction("onClick : calc.append('" + txtCalcId + "', '1')");
-
-        Button btn2 = new Button();
-        btn2.setWidth("30px");
-        btn2.setLabel("2");
-        btn2.setAction("onClick : calc.append('" + txtCalcId + "', '2')");
-
-        Button btn3 = new Button();
-        btn3.setWidth("30px");
-        btn3.setLabel("3");
-        btn3.setAction("onClick : calc.append('" + txtCalcId + "', '3')");
-
-        Button btnSubstract = new Button();
-        btnSubstract.setWidth("30px");
-        btnSubstract.setLabel("-");
-        btnSubstract.setAction("onClick : calc.append('" + txtCalcId + "', ' - ')");
-
-        row3.appendChild(btnModulo);
-        row3.appendChild(btn1);
-        row3.appendChild(btn2);
-        row3.appendChild(btn3);
-        row3.appendChild(btnSubstract);
-
-        Hbox row4 = new Hbox();
-
-        Button btnCurrency = new Button();
-        btnCurrency.setWidth("40px");
-        btnCurrency.setLabel("$");
-        btnCurrency.setDisabled(true);
-
-        Button btn0 = new Button();
-        btn0.setWidth("30px");
-        btn0.setLabel("0");
-        btn0.setAction("onClick : calc.append('" + txtCalcId + "', '0')");
-
-        
-        Button btnDot = new Button();
-        btnDot.setWidth("30px");
-        btnDot.setLabel(separator);
-        btnDot.setDisabled(integral);
-        btnDot.setAction("onClick : calc.append('" + txtCalcId + "', '" + separator + "')");
-
-        Button btnEqual = new Button();
-        btnEqual.setWidth("30px");
-        btnEqual.setLabel("=");
-        btnEqual.setAction("onClick : calc.evaluate('" + decimalBox.getId() + "','" 
-                + txtCalcId + "','" + separator + "')");
-        
-        Button btnAdd = new Button();
-        btnAdd.setWidth("30px");
-        btnAdd.setLabel("+");
-        btnAdd.setAction("onClick : calc.append('" + txtCalcId + "', ' + ')");
-
-        row4.appendChild(btnCurrency);
-        row4.appendChild(btnDot);
-        row4.appendChild(btn0);
-        row4.appendChild(btnEqual);
-        row4.appendChild(btnAdd);
-
-        vbox.appendChild(row1);
-        vbox.appendChild(row2);
-        vbox.appendChild(row3);
-        vbox.appendChild(row4);
-
-        popup.appendChild(vbox);
+    public Popup getPopupMenu() {
         return popup;
     }
 
-    /**
-     * 
-     * @return boolean
-     */
-	public boolean isIntegral() {
-		return integral;
-	}
+    private void init() {
+        Hbox hbox = new Hbox();
+        hbox.setSpacing("2px");
+        appendChild(hbox);
 
-	/**
-	 * 
-	 * @param integral
-	 */
-	public void setIntegral(boolean integral) {
-		this.integral = integral;
-		if (integral)
-			decimalBox.setScale(0);
-		else
-			decimalBox.setScale(Decimalbox.AUTO);
-	}
-	
-	/**
-	 * 
-	 * @param enabled
-	 */
-	public void setEnabled(boolean enabled)
-	{
-	     decimalBox.setReadonly(!enabled);
-	     
-	     boolean isCalculatorEnabled = btnEnabled && enabled;
-	     btn.setEnabled(isCalculatorEnabled);
-	     if (isCalculatorEnabled)
-	    	 btn.setPopup(popup);
-	     else 
-	     {
-	    	 Popup p = null;
-	    	 btn.setPopup(p);
-	     }
-	}
-	
-	/**
-	 * 
-	 * @return boolean
-	 */
-	public boolean isEnabled()
-	{
-		 return decimalBox.isReadonly();
-	}
-	
-	public boolean isReadonly()
-	{
-		return decimalBox.isReadonly();
-	}
-	
-	@Override
-	public boolean addEventListener(String evtnm, EventListener listener)
-	{
-	     if(Events.ON_CLICK.equals(evtnm))
-	     {
-	       	 return btn.addEventListener(evtnm, listener);
-	     }
-	     else
-	     {
-	         return decimalBox.addEventListener(evtnm, listener);
-	     }
-	}
-	
-	@Override
-	public void focus()
-	{
-		decimalBox.focus();
-	}
-	
-	/**
-	 * 
-	 * @return decimalBox
-	 */
-	public Decimalbox getDecimalbox()
-	{
-		return decimalBox;
-	}
-	
-	public void setCalculatorEnabled(boolean enabled)
-	{
-		btnEnabled = enabled;
-		btn.setEnabled(btnEnabled);
-		btn.setVisible(btnEnabled);
-	}
-	public boolean isCalculatorEnabled()
-	{
-		return this.btnEnabled;
-	}
+        decimalBox = new Decimalbox();
+        if (integral)
+            decimalBox.setScale(0);
+        decimalBox.setStyle("text-align: right; padding-right: 2px;");
+        hbox.appendChild(decimalBox);
 
-    /**
-     * Set the old value of the field.  For use in future comparisons.
-     * The old value must be explicitly set though this call.
-     */
+        btn = new Button();
+        btn.setImage("/images/Calculator10.png");
+        btn.setTabindex(-1);
+        LayoutUtils.addSclass("editor-button", btn);
+        hbox.appendChild(btn);
+
+        popup = createCalculatorPopup();
+        btn.setPopup(popup);
+        btn.setStyle("text-align: center;");
+        appendChild(popup);
+
+        String style = AEnv.isFirefox2() ? "display: inline" : "display: inline-block";
+        style += ";white-space:nowrap";
+        setStyle(style);
+    }
+
+    public void setFormat(NumberFormat format) {
+        this.format = format;
+    }
+
+    public void setValue(Object value) {
+        if (value == null) {
+            decimalBox.setValue((BigDecimal) null);
+        } else if (value instanceof BigDecimal) {
+            decimalBox.setValue((BigDecimal) value);
+        } else if (value instanceof Number) {
+            decimalBox.setValue(BigDecimal.valueOf(((Number) value).doubleValue()));
+        } else {
+            decimalBox.setValue(new BigDecimal(value.toString()));
+        }
+    }
+
+    public BigDecimal getValue() {
+        return decimalBox.getValue();
+    }
+
+    public String getText() {
+        BigDecimal value = decimalBox.getValue();
+        if (value == null)
+            return null;
+        if (format != null)
+            return format.format(value);
+        else
+            return value.toPlainString();
+    }
+
+    public void setValue(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            decimalBox.setValue((BigDecimal) null);
+            return;
+        }
+        try {
+            if (format != null) {
+                Number numberValue = format.parse(value);
+                setValue(numberValue);
+            } else {
+                decimalBox.setValue(new BigDecimal(value));
+            }
+        } catch (ParseException e) {
+            // ignore parse errors or handle as needed
+        }
+    }
+
+    private Popup createCalculatorPopup() {
+        Popup popup = new Popup();
+        Vbox vbox = new Vbox();
+        popup.appendChild(vbox);
+
+        // Decimal separator for the current locale
+        char separatorChar = DisplayType.getNumberFormat(DisplayType.Number, Env.getLanguage(Env.getCtx()))
+                .getDecimalFormatSymbols().getDecimalSeparator();
+        String separator = Character.toString(separatorChar);
+
+        txtCalc = new Textbox();
+        txtCalc.setMaxlength(250);
+        txtCalc.setCols(30);
+        vbox.appendChild(txtCalc);
+
+        // Buttons row 1
+        Hbox row1 = new Hbox();
+        addButton(row1, "AC", e -> calcClearAll());
+        addButton(row1, "7", e -> calcAppend("7"));
+        addButton(row1, "8", e -> calcAppend("8"));
+        addButton(row1, "9", e -> calcAppend("9"));
+        addButton(row1, "*", e -> calcAppend(" * "));
+        vbox.appendChild(row1);
+
+        // Buttons row 2
+        Hbox row2 = new Hbox();
+        addButton(row2, "C", e -> calcClear());
+        addButton(row2, "4", e -> calcAppend("4"));
+        addButton(row2, "5", e -> calcAppend("5"));
+        addButton(row2, "6", e -> calcAppend("6"));
+        addButton(row2, "/", e -> calcAppend(" / "));
+        vbox.appendChild(row2);
+
+        // Buttons row 3
+        Hbox row3 = new Hbox();
+        addButton(row3, "%", e -> calcPercentage());
+        addButton(row3, "1", e -> calcAppend("1"));
+        addButton(row3, "2", e -> calcAppend("2"));
+        addButton(row3, "3", e -> calcAppend("3"));
+        addButton(row3, "-", e -> calcAppend(" - "));
+        vbox.appendChild(row3);
+
+        // Buttons row 4
+        Hbox row4 = new Hbox();
+        Button btnCurrency = new Button("$");
+        btnCurrency.setWidth("40px");
+        btnCurrency.setDisabled(true);
+        row4.appendChild(btnCurrency);
+
+        Button btnDot = new Button(separator);
+        btnDot.setWidth("30px");
+        btnDot.setDisabled(integral);
+        btnDot.addEventListener(Events.ON_CLICK, e -> calcAppend(separator));
+        row4.appendChild(btnDot);
+
+        addButton(row4, "0", e -> calcAppend("0"));
+        addButton(row4, "=", e -> calcEvaluate());
+        addButton(row4, "+", e -> calcAppend(" + "));
+        vbox.appendChild(row4);
+
+        return popup;
+    }
+
+    private void addButton(Hbox container, String label, EventListener<Event> listener) {
+        Button btn = new Button(label);
+        btn.setWidth(label.equals("AC") || label.equals("C") || label.equals("%") ? "40px" : "30px");
+        btn.addEventListener(Events.ON_CLICK, listener);
+        container.appendChild(btn);
+    }
+
+    // Calculator logic
+
+    private void calcClearAll() {
+        txtCalc.setValue("");
+    }
+
+    private void calcClear() {
+        String val = txtCalc.getValue();
+        if (val != null && val.length() > 0) {
+            txtCalc.setValue(val.substring(0, val.length() - 1));
+        }
+    }
+
+    private void calcAppend(String s) {
+        String val = txtCalc.getValue();
+        txtCalc.setValue((val != null ? val : "") + s);
+    }
+
+    private void calcPercentage() {
+        // Calculate percentage based on current decimalBox value and input
+        try {
+            BigDecimal base = decimalBox.getValue();
+            if (base == null) base = BigDecimal.ZERO;
+
+            String calcVal = txtCalc.getValue();
+            if (calcVal == null || calcVal.trim().isEmpty()) return;
+
+            BigDecimal percentage = new BigDecimal(calcVal.trim());
+            BigDecimal result = base.multiply(percentage).divide(BigDecimal.valueOf(100));
+            decimalBox.setValue(result);
+            popup.close();
+        } catch (Exception e) {
+            // Handle parsing errors silently or log
+        }
+    }
+
+    private void calcEvaluate() {
+        try {
+            String expr = txtCalc.getValue();
+            if (expr == null || expr.trim().isEmpty())
+                return;
+
+            // Use built-in ScriptEngine for evaluation (JS engine)
+            javax.script.ScriptEngine engine = new javax.script.ScriptEngineManager().getEngineByName("JavaScript");
+            Object evalResult = engine.eval(expr);
+
+            BigDecimal bdResult = null;
+            if (evalResult instanceof Number) {
+                bdResult = new BigDecimal(((Number) evalResult).doubleValue());
+            } else {
+                bdResult = new BigDecimal(evalResult.toString());
+            }
+
+            if (integral) {
+                bdResult = bdResult.setScale(0, BigDecimal.ROUND_HALF_UP);
+            }
+
+            decimalBox.setValue(bdResult);
+            popup.close();
+        } catch (Exception e) {
+            // Optionally notify user of invalid expression
+        }
+    }
+
+    public boolean isIntegral() {
+        return integral;
+    }
+
+    public void setIntegral(boolean integral) {
+        this.integral = integral;
+        if (integral)
+            decimalBox.setScale(0);
+        else
+            decimalBox.setScale(Decimalbox.AUTO);
+    }
+
+    public void setEnabled(boolean enabled) {
+        decimalBox.setReadonly(!enabled);
+
+        boolean isCalculatorEnabled = btnEnabled && enabled;
+        btn.setDisabled(!isCalculatorEnabled);
+        if (isCalculatorEnabled)
+            btn.setPopup(popup);
+        else
+            btn.setPopup((Popup) null);
+    }
+
+    public boolean isEnabled() {
+        return !decimalBox.isReadonly();
+    }
+
+    public boolean isReadonly() {
+        return decimalBox.isReadonly();
+    }
+
+    @Override
+    public boolean addEventListener(String evtnm, EventListener<?> listener) {
+        if (Events.ON_CLICK.equals(evtnm)) {
+            return btn.addEventListener(evtnm, listener);
+        } else {
+            return decimalBox.addEventListener(evtnm, listener);
+        }
+    }
+
+    @Override
+    public void focus() {
+        decimalBox.focus();
+    }
+
+    public Decimalbox getDecimalbox() {
+        return decimalBox;
+    }
+
+    public void setCalculatorEnabled(boolean enabled) {
+        btnEnabled = enabled;
+        btn.setDisabled(!btnEnabled);
+        btn.setVisible(btnEnabled);
+    }
+
+    public boolean isCalculatorEnabled() {
+        return btnEnabled;
+    }
+
     public void set_oldValue() {
         this.m_oldValue = getValue();
     }
 
-    /**
-     * Get the old value of the field explicitly set in the past
-     * @return
-     */
     public Object get_oldValue() {
         return m_oldValue;
     }
-    /**
-     * Has the field changed over time?
-     * @return true if the old value is different than the current.
-     */
-    public boolean hasChanged() {
-        // Both or either could be null
-        if(getValue() != null)
-            if(m_oldValue != null)
-                return !m_oldValue.equals(getValue());
-            else
-                return true;
-        else  // getValue() is null
-            if(m_oldValue != null)
-                return true;
-            else
-                return false;
-    }
 
-	public Decimalbox getDecimalBox() {
-		return decimalBox;
-	}
+    public boolean hasChanged() {
+        if (getValue() != null)
+            return m_oldValue == null || !m_oldValue.equals(getValue());
+        else
+            return m_oldValue != null;
+    }
 }

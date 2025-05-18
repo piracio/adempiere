@@ -187,7 +187,7 @@ public class WPOS extends CPOS implements IFormController, EventListener, POSPan
 		documentPanel = new WPOSDocumentPanel(this);
 		orderLinePanel = new WPOSOrderLinePanel(this);
 		infoProductPanel = new WPOSInfoProduct(this);
-		quantityPanel = new WPOSQuantityPanel(this);
+		quantityPanel = new WPOSQuantityPanel();
 		East east = new East();
 		Center center = new Center();
 		West westPanel = new West();
@@ -208,7 +208,7 @@ public class WPOS extends CPOS implements IFormController, EventListener, POSPan
 		east.appendChild(documentPanel);
 		this.actionPanel.appendChild(infoProductPanel.getPanel());
 		if(IsShowLineControl())
-			this.actionPanel.appendChild(quantityPanel.getPanel());
+			this.actionPanel.appendChild(quantityPanel);
 		this.actionPanel.appendChild(orderLinePanel);
 		
 		east.setSplittable(true);
