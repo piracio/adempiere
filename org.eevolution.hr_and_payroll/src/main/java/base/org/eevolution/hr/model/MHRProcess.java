@@ -16,6 +16,16 @@
  *****************************************************************************/
 package org.eevolution.hr.model;
 
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptEngine;
+
+import javax.script.ScriptEngineManager;
+import javax.script.Bindings;
+import javax.script.SimpleBindings;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -64,9 +74,14 @@ import org.spin.hr.util.PayrollEngineHandler;
 import org.spin.hr.util.RuleInterface;
 import org.spin.hr.util.TNAUtil;
 
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.SimpleScriptContext;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import org.compiere.util.Trx;
+import java.util.concurrent.ExecutionException;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * HR Process Model
@@ -102,23 +117,23 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 	public int payrollId = 0;
 	public int departmentId = 0;
 	public int jobId = 0;
-	public String columnType = "";
+    private final ThreadLocal<String> columnType = ThreadLocal.withInitial(() -> "");
 	public Timestamp dateFrom;
 	public Timestamp dateTo;
 	private MHRPayroll payroll = null;
 	/** HR_Concept_ID->MHRMovement */
-	public Hashtable<Integer, MHRMovement> movements = new Hashtable<Integer, MHRMovement>();
+    public final Map<Integer, MHRMovement> movements = new HashMap<>();
 	public MHRPayrollConcept[] payrollConcepts;
 	/** The employee being processed */
 	private MHREmployee employee;
 	private MBPartner businessPartner;
 	/** the context for rules */
-	HashMap<String, Object> scriptCtx = new HashMap<String, Object>();
+    private final ThreadLocal<Map<String, Object>> scriptCtx = ThreadLocal.withInitial(HashMap::new);
 	/* stack of concepts executing rules - to check loop in recursion */
-	private List<MHRConcept> activeConceptRule = new ArrayList<MHRConcept>();
-	private Map<String, MHRMovement> lastConceptMap = new HashMap<String, MHRMovement>();
-	private Map<String, BigDecimal> conceptAgregateMap = new HashMap<String, BigDecimal>();
-	private Map<String, MHRAttribute> attributeInstanceMap = new HashMap<String, MHRAttribute>();
+    private final ThreadLocal<Deque<MHRConcept>> activeConceptRule = ThreadLocal.withInitial(ArrayDeque::new);
+    private final Map<String, MHRMovement> lastConceptMap        = new ConcurrentHashMap<>();
+    private final Map<String, BigDecimal> conceptAgregateMap     = new ConcurrentHashMap<>();
+    private final Map<String, MHRAttribute> attributeInstanceMap = new ConcurrentHashMap<>();
 
 	/**	Static Logger	*/
 	private static CLogger logger = CLogger.getCLogger (MHRProcess.class);
@@ -144,7 +159,14 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 			+ Env.NL + "import java.math.*;"
 			+ Env.NL + "import java.sql.*;");
 
-	public static void addScriptImportPackage(String packageName)
+    /** JSR-223 rule cache (per AD_Rule_ID) */
+    private static final Map<Integer, CompiledScript> RULE_CACHE = new ConcurrentHashMap<>();
+    /** Keep a tiny “version” to invalidate on rule text change */
+    private static final Map<Integer, Integer> RULE_SRC_HASH = new ConcurrentHashMap<>();
+    /* Per-rule lock to serialize eval for engines that aren't thread-safe */
+    private static final Map<Integer, Object> RULE_LOCK = new ConcurrentHashMap<>();
+
+    public static void addScriptImportPackage(String packageName)
 	{
 		s_scriptImport.append(" import ").append(packageName).append(";");
 	}
@@ -706,7 +728,7 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 	 * @param movements hashtable
 	 * @param partnerId
 	 */
-	private void loadMovements(Hashtable<Integer,MHRMovement> movements, int partnerId)
+    private void loadMovements(Map<Integer,MHRMovement> movements, int partnerId)
 	{
 		final String whereClause = MHRMovement.COLUMNNAME_HR_Process_ID+"=?"
 		+" AND "+MHRMovement.COLUMNNAME_C_BPartner_ID+"=?";
@@ -734,47 +756,91 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 		}
 	}
 
-	private Object executeScriptEngine(MHRConcept concept , MRule rule, String columnType)
-	{
-		long startTime = System.currentTimeMillis();
-		Object result = null;
-		try {
-			String text = "";
-			if (rule.getScript() != null)
-			{
-				text = rule.getScript().trim().replaceAll("\\bget", "process.get")
-						.replace(".process.get", ".get");
-			}
-			final String script =
-					s_scriptImport.toString()
-							+ Env.NL + text;
+    /** Normalize rule script text (cached hash is built from this result) */
+    private static String transformRuleText(String raw) {
+        if (raw == null) return "";
+        // Keep semantics but avoid expensive regex each call in hot path
+        // The original used replaceAll("\\bget", "process.get"). We approximate safely:
+        String t = raw.trim();
+        // still use regex once (word boundary) but only when we build the cache key:
+        // we’ll do the regex in the caller to compute hash; here do cheap textual fix for safety.
+        t = t.replace(".process.get", ".get"); // no-op guard like original
+        return t;
+    }
 
-			ScriptEngine engine = rule.getScriptEngine();
-			final ScriptContext context = new SimpleScriptContext();
-			scriptCtx.entrySet().stream().forEach(entry -> context.setAttribute(entry.getKey(), entry.getValue(), ScriptContext.ENGINE_SCOPE));
-		    context.setAttribute("description", "", ScriptContext.ENGINE_SCOPE);
-			//	Yamel Senih Add DefValue to another Types
-			Object defaultValue = 0.0;
-			if  (MHRAttribute.COLUMNTYPE_Date.equals(columnType)
-					|| MHRAttribute.COLUMNTYPE_Text.equals(columnType)) {
-				defaultValue = null;
-			}
-			context.setAttribute("result", defaultValue, ScriptContext.ENGINE_SCOPE);
-		    result = engine.eval(script, context);
-			if (result != null && "@Error@".equals(result.toString())) {
-				throw new AdempiereException("@AD_Rule_ID@ @HR_Concept_ID@ "+ concept.getValue() + "" + concept.getName()+ "	 @@Error@ " + result);
-			}
-			//	
-			description = context.getAttribute("description");
-			long elapsed = System.currentTimeMillis() - startTime;
-			logger.info("ScriptResult -> Concept Name " + concept.getName() + " = " + result + " Time elapsed: " + TimeUtil.formatElapsed(elapsed));
-		}
-		catch (Exception e)
-		{
-			throw new AdempiereException(e.getLocalizedMessage());
-		}
-		return  result;
-	}
+    private Object executeScriptEngine(MHRConcept concept , MRule rule, String columnType)
+    {
+        long startTime = System.currentTimeMillis();
+        Object result = null;
+
+        try {
+            // 1) Build source once (imports + transformed script)
+            String raw = (rule.getScript() == null) ? "" : rule.getScript();
+            // Compute a strict, stable hash using the original rule text with the original regex transform
+            String regexTransformed = raw.trim()
+                    .replaceAll("\\bget", "process.get")
+                    .replace(".process.get", ".get");
+            String source = s_scriptImport.toString() + Env.NL + regexTransformed;
+
+            // 2) Pick / compile engine if possible
+            ScriptEngine engine = rule.getScriptEngine();
+            if (engine == null) {
+                throw new AdempiereException("No JSR-223 engine available for rule: " + rule.getValue());
+            }
+            CompiledScript compiled = null;
+            int newHash = source.hashCode();
+            Integer oldHash = RULE_SRC_HASH.get(rule.getAD_Rule_ID());
+
+            compiled = RULE_CACHE.compute(rule.getAD_Rule_ID(), (k, v) -> {
+                if (!Objects.equals(RULE_SRC_HASH.get(k), newHash) || v == null) {
+                    try {
+                        CompiledScript cs = ((Compilable) engine).compile(source);
+                        RULE_SRC_HASH.put(k, newHash);
+                        return cs;
+                    } catch (Exception ex) {
+                        throw new AdempiereException(ex);
+                    }
+                }
+                return v;
+            });
+
+            // 3) Prepare fresh Bindings for each eval (bindings are NOT thread-safe to reuse)
+            Bindings bindings = (engine != null ? engine.createBindings() : new SimpleBindings());
+            // push scriptCtx
+            for (Map.Entry<String, Object> e : scriptCtx.get().entrySet()) {
+                bindings.put(e.getKey(), e.getValue());
+            }
+
+            // set default “description” and return “result” depending on column type
+            bindings.put("description", "");
+            Object defaultValue = 0.0;
+            if  (MHRAttribute.COLUMNTYPE_Date.equals(columnType)
+                    || MHRAttribute.COLUMNTYPE_Text.equals(columnType)) {
+                defaultValue = null;
+            }
+            bindings.put("result", defaultValue);
+
+            // 4) Eval compiled or interpreted
+            Object lock = RULE_LOCK.computeIfAbsent(rule.getAD_Rule_ID(), id -> new Object());
+            synchronized (lock) {
+                result = (compiled != null) ? compiled.eval(bindings) : engine.eval(source, bindings);
+            }
+
+            if (result != null && "@Error@".equals(result.toString())) {
+                throw new AdempiereException("@AD_Rule_ID@ @HR_Concept_ID@ " + concept.getValue() + " " + concept.getName() + "  @@Error@ " + result);
+            }
+            // pull description back
+            description = bindings.get("description");
+
+            long elapsed = System.currentTimeMillis() - startTime;
+            logger.info("ScriptResult -> Concept Name " + concept.getName() + " = " + result + " Time elapsed: " + TimeUtil.formatElapsed(elapsed));
+        }
+        catch (Exception e)
+        {
+            throw new AdempiereException(e.getLocalizedMessage());
+        }
+        return  result;
+    }
 
 	/**
 	 * Execute the script
@@ -805,7 +871,7 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 					RuleInterface ruleEngine = PayrollEngineHandler.getInstance().getRuleEngine(rule);
 					if(ruleEngine != null) {
 						isRunned = true;
-						result = ruleEngine.run(this, scriptCtx);
+						result = ruleEngine.run(this, scriptCtx.get());
 						description = ruleEngine.getDescription();
 					}
 				} catch (ClassNotFoundException e) {	//	For Class not found
@@ -839,8 +905,12 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 								+ Env.NL + resultType + " result = "+ defValue +";"
 								+ Env.NL + "String description = null;"
 								+ Env.NL + text;
-				Scriptlet engine = new Scriptlet (Scriptlet.VARIABLE, script, scriptCtx);
-				Exception ex = engine.execute();
+                Scriptlet engine = new Scriptlet(
+                        Scriptlet.VARIABLE,
+                        script,
+                        new HashMap<>(scriptCtx.get())   // make it a HashMap
+                );
+                Exception ex = engine.execute();
 				if (ex != null) {
 					throw ex;
 				}
@@ -933,12 +1003,12 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 
 		if (MHRConcept.TYPE_RuleEngine.equals(concept.getType())) {
 			Object result;
-			scriptCtx.put("_CostCollector", costCollector);
+			scriptCtx.get().put("_CostCollector", costCollector);
 			try {
 				result = executeScript(concept , attribute.getAD_Rule_ID(), attribute.getColumnType());
 			}
 			finally {
-				scriptCtx.remove("_CostCollector");
+				scriptCtx.get().remove("_CostCollector");
 			}
 
 			//get employee
@@ -977,10 +1047,10 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 	{
 		logger.info("CreateMovements #");
 		long startTime = System.currentTimeMillis();
-		scriptCtx.clear();
-		lastConceptMap = new HashMap<String, MHRMovement>();
-		conceptAgregateMap = new HashMap<String, BigDecimal>();
-		attributeInstanceMap = new HashMap<String, MHRAttribute>();
+		scriptCtx.get().clear();
+        lastConceptMap.clear();
+        conceptAgregateMap.clear();
+        attributeInstanceMap.clear();
 		//	
 		logger.info("info data - Process " + getHR_Process_ID() + ", Period :" + getHR_Period_ID() + ", Payroll : " + getHR_Payroll_ID() + ", @HR_Department_ID@ : " + getHR_Department_ID());
 		
@@ -1010,24 +1080,24 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 		dateTo   = payrollPeriod.getEndDate();
 		payroll = MHRPayroll.getById(getCtx(), getHR_Payroll_ID(), get_TrxName());
 		//	Put variables
-		scriptCtx.put("process", this);
-		scriptCtx.put("_Process", getHR_Process_ID());
-		scriptCtx.put("_Period", getHR_Period_ID());
-		scriptCtx.put("_Payroll", getHR_Payroll_ID());
-		scriptCtx.put("_Department", getHR_Department_ID());
-		scriptCtx.put("_From", dateFrom);
-		scriptCtx.put("_To", dateTo);
-		scriptCtx.put("_Period", payrollPeriod.getPeriodNo());
-		scriptCtx.put("_PeriodNo", payrollPeriod.getPeriodNo());
-		scriptCtx.put("_HR_Period_ID", getHR_Period_ID());
-		scriptCtx.put("_HR_Payroll_Value", payroll.getValue());
+		scriptCtx.get().put("process", this);
+		scriptCtx.get().put("_Process", getHR_Process_ID());
+		scriptCtx.get().put("_Period", getHR_Period_ID());
+		scriptCtx.get().put("_Payroll", getHR_Payroll_ID());
+		scriptCtx.get().put("_Department", getHR_Department_ID());
+		scriptCtx.get().put("_From", dateFrom);
+		scriptCtx.get().put("_To", dateTo);
+		scriptCtx.get().put("_Period", payrollPeriod.getPeriodNo());
+		scriptCtx.get().put("_PeriodNo", payrollPeriod.getPeriodNo());
+		scriptCtx.get().put("_HR_Period_ID", getHR_Period_ID());
+		scriptCtx.get().put("_HR_Payroll_Value", payroll.getValue());
 		//	Scope
-		scriptCtx.put("SCOPE_PROCESS", HRProcessActionMsg.SCOPE_PROCESS);
-		scriptCtx.put("SCOPE_EMPLOYEE", HRProcessActionMsg.SCOPE_EMPLOYEE);
-		scriptCtx.put("SCOPE_CONCEPT", HRProcessActionMsg.SCOPE_CONCEPT);
-		scriptCtx.put("PERSISTENCE_SAVE", HRProcessActionMsg.PERSISTENCE_SAVE);
-		scriptCtx.put("PERSISTENCE_IGNORE", HRProcessActionMsg.PERSISTENCE_IGNORE);
-		scriptCtx.put("ACTION_BREAK", HRProcessActionMsg.ACTION_BREAK);
+		scriptCtx.get().put("SCOPE_PROCESS", HRProcessActionMsg.SCOPE_PROCESS);
+		scriptCtx.get().put("SCOPE_EMPLOYEE", HRProcessActionMsg.SCOPE_EMPLOYEE);
+		scriptCtx.get().put("SCOPE_CONCEPT", HRProcessActionMsg.SCOPE_CONCEPT);
+		scriptCtx.get().put("PERSISTENCE_SAVE", HRProcessActionMsg.PERSISTENCE_SAVE);
+		scriptCtx.get().put("PERSISTENCE_IGNORE", HRProcessActionMsg.PERSISTENCE_IGNORE);
+		scriptCtx.get().put("ACTION_BREAK", HRProcessActionMsg.ACTION_BREAK);
 		//	
 		if(getHR_Payroll_ID() > 0)
 			payrollId = getHR_Payroll_ID();
@@ -1039,20 +1109,70 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 		payrollConcepts = MHRPayrollConcept.getPayrollConcepts(this);
 		//	Instance Scope
 		actionScope = new HRProcessActionMsg();
-		//	
-		for(MBPartner employee : MHREmployee.getEmployees(this)) {
-			calculateMovements(employee, payrollPeriod);
-			//	Validate action
-			if(actionScope.isProcessScope()
-					&& actionScope.isBreakRunning()) {
-				actionScope.clearAction();
-				actionScope.clearScope();
-				actionScope.clearPersistence();
-				break;
-			}
-		}
+        // Enable parallel execution with #HR_RunParallel=Y context or -Dhr.parallel=true
+        final boolean __runParallel = "Y".equalsIgnoreCase(Env.getContext(getCtx(), "#HR_RunParallel"))
+                || Boolean.getBoolean("hr.parallel");
 
-		// Save period & finish
+        if (__runParallel) {
+            // Snapshot employees to avoid iterating a live cursor in threads
+            final MBPartner[] __employees = MHREmployee.getEmployees(this);
+
+            // Limit threads to CPU cores (max 8 by default)
+            final int __threads = Math.max(1, Math.min(Runtime.getRuntime().availableProcessors(), 8));
+            final ExecutorService __pool = Executors.newFixedThreadPool(__threads);
+            final List<Future<?>> __futs = new ArrayList<>();
+
+            for (final MBPartner __emp : __employees) {
+                __futs.add(__pool.submit(() -> {
+                    final String __trxName = Trx.createTrxName("HRP");
+                    final Trx __trx = Trx.get(__trxName, true);
+                    try {
+                        // Isolated worker instance pointing to the same HR_Process_ID but with its own state & trx
+                        final MHRProcess __worker = new MHRProcess(getCtx(), getHR_Process_ID(), __trxName);
+                        __worker.dateFrom = dateFrom;
+                        __worker.dateTo = dateTo;
+                        __worker.payroll = payroll;
+                        __worker.payrollConcepts = payrollConcepts;
+                        __worker.actionScope = new HRProcessActionMsg();
+                        __worker.scriptCtx.get().clear();
+                        __worker.scriptCtx.get().put("process", __worker); // scripts must reference the worker instance
+
+                        __worker.calculateMovements(__emp, payrollPeriod);
+                        __trx.commit();
+                    } catch (Exception __ex) {
+                        __trx.rollback();
+                        throw __ex;
+                    } finally {
+                        activeConceptRule.remove();
+                        scriptCtx.remove();
+                        __trx.close();
+                    }
+                    return null;
+                }));
+            }
+
+            // wait for all tasks to finish (propagates any error)
+            for (Future<?> __f : __futs) {
+                __f.get();
+            }
+            __pool.shutdown();
+            __pool.awaitTermination(1, java.util.concurrent.TimeUnit.DAYS);
+        } else {
+            for (MBPartner employee : MHREmployee.getEmployees(this)) {
+                calculateMovements(employee, payrollPeriod);
+                // Validate action
+                if (actionScope.isProcessScope()
+                        && actionScope.isBreakRunning()) {
+                    actionScope.clearAction();
+                    actionScope.clearScope();
+                    actionScope.clearPersistence();
+                    break;
+                }
+            }
+        }
+
+
+        // Save period & finish
 		if (getHR_Period_ID() > 0) {
 			payrollPeriod.setProcessed(true);
 			payrollPeriod.saveEx();
@@ -1098,33 +1218,33 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 		if(employee.getEndDate() != null && dateTo != null && employee.getEndDate().getTime() < dateTo.getTime()) {
 			employeeValidTo = employee.getEndDate();
 		}
-		scriptCtx.remove("_DateStart");
-		scriptCtx.remove("_DateEnd");
-		scriptCtx.remove("_Days");
-		scriptCtx.remove("_C_BPartner_ID");
-		scriptCtx.remove("_HR_Employee_ID");
-		scriptCtx.remove("_C_BPartner");
-		scriptCtx.remove("_HR_Employee");
-		scriptCtx.remove("_HR_Employee_ValidFrom");
-		scriptCtx.remove("_HR_Employee_ValidTo");
-		scriptCtx.remove("_HR_Employee_Payroll_Value");
-		scriptCtx.remove("_HR_Employee_Contract");
+		scriptCtx.get().remove("_DateStart");
+		scriptCtx.get().remove("_DateEnd");
+		scriptCtx.get().remove("_Days");
+		scriptCtx.get().remove("_C_BPartner_ID");
+		scriptCtx.get().remove("_HR_Employee_ID");
+		scriptCtx.get().remove("_C_BPartner");
+		scriptCtx.get().remove("_HR_Employee");
+		scriptCtx.get().remove("_HR_Employee_ValidFrom");
+		scriptCtx.get().remove("_HR_Employee_ValidTo");
+		scriptCtx.get().remove("_HR_Employee_Payroll_Value");
+		scriptCtx.get().remove("_HR_Employee_Contract");
 
-		scriptCtx.put("_DateStart", employee.getStartDate());
-		scriptCtx.put("_DateEnd", employee.getEndDate() == null ? dateTo == null ? getDateAcct() : dateTo : employee.getEndDate());
-		scriptCtx.put("_Days", TimeUtil.getDaysBetween(payrollPeriod.getStartDate(),payrollPeriod.getEndDate()) + 1);
-		scriptCtx.put("_C_BPartner_ID", partner.getC_BPartner_ID());
-		scriptCtx.put("_HR_Employee_ID", employee.getHR_Employee_ID());
-		scriptCtx.put("_C_BPartner", partner);
-		scriptCtx.put("_HR_Employee", employee);
+		scriptCtx.get().put("_DateStart", employee.getStartDate());
+		scriptCtx.get().put("_DateEnd", employee.getEndDate() == null ? dateTo == null ? getDateAcct() : dateTo : employee.getEndDate());
+		scriptCtx.get().put("_Days", TimeUtil.getDaysBetween(payrollPeriod.getStartDate(),payrollPeriod.getEndDate()) + 1);
+		scriptCtx.get().put("_C_BPartner_ID", partner.getC_BPartner_ID());
+		scriptCtx.get().put("_HR_Employee_ID", employee.getHR_Employee_ID());
+		scriptCtx.get().put("_C_BPartner", partner);
+		scriptCtx.get().put("_HR_Employee", employee);
 		if(employeePayroll != null) {
-			scriptCtx.put("_HR_Employee_Payroll_Value", employeePayroll.getValue());
+			scriptCtx.get().put("_HR_Employee_Payroll_Value", employeePayroll.getValue());
 			MHRContract contract = MHRContract.getById(getCtx(), employeePayroll.getHR_Contract_ID(), get_TrxName());
-			scriptCtx.put("_HR_Employee_Contract", contract);
+			scriptCtx.get().put("_HR_Employee_Contract", contract);
 		}
 		//	Get Employee valid from and to
-		scriptCtx.put("_HR_Employee_ValidFrom", employeeValidFrom);
-		scriptCtx.put("_HR_Employee_ValidTo", employeeValidTo);
+		scriptCtx.get().put("_HR_Employee_ValidFrom", employeeValidFrom);
+		scriptCtx.get().put("_HR_Employee_ValidTo", employeeValidTo);
 		//	
 		if(getHR_Period_ID() > 0) {
 			createCostCollectorMovements(partner.get_ID(), payrollPeriod);
@@ -1148,12 +1268,12 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 			boolean printed = payrollConcept.isPrinted() || concept.isPrinted();
 			MHRMovement movement = movements.get(concept.get_ID()); // as it's now recursive, it can happen that the concept is already generated
 			if (movement == null) {
-				scriptCtx.remove("_HR_Concept_ID");
-				scriptCtx.remove("_HR_Concept");
-				scriptCtx.put("_HR_Concept_ID", concept.getHR_Concept_ID());
-				scriptCtx.put("_HR_Concept", concept);
-				scriptCtx.remove("_HR_PayrollConcept_ID");
-				scriptCtx.put("_HR_PayrollConcept_ID", payrollConcept.getHR_PayrollConcept_ID());
+				scriptCtx.get().remove("_HR_Concept_ID");
+				scriptCtx.get().remove("_HR_Concept");
+				scriptCtx.get().put("_HR_Concept_ID", concept.getHR_Concept_ID());
+				scriptCtx.get().put("_HR_Concept", concept);
+				scriptCtx.get().remove("_HR_PayrollConcept_ID");
+				scriptCtx.get().put("_HR_PayrollConcept_ID", payrollConcept.getHR_PayrollConcept_ID());
 				createMovementFromConcept(concept, printed);
 				movement = movements.get(concept.get_ID());
 				//	Validate null
@@ -1231,7 +1351,7 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 	 */
 	private void createMovementFromConcept(MHRConcept concept, boolean isPrinted) {
 		logger.info("Calculating -> Concept "+ concept.getValue() + " -> " + concept.getName());
-		columnType = concept.getColumnType();
+        columnType.set(concept.getColumnType());
 		MHRAttribute attribute = MHRAttribute.getByConceptAndEmployee(concept , employee, getHR_Payroll_ID(),  dateFrom ,dateTo);
 		if (attribute == null || concept.isManual())
 		{
@@ -1244,15 +1364,18 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 		if (MHRConcept.TYPE_RuleEngine.equals(concept.getType()))
 		{
 			logger.info("Processing -> Rule to Concept " + concept.getValue());
-			if (activeConceptRule.contains(concept)) {
+			if (activeConceptRule.get().contains(concept)) {
 				throw new AdempiereException("Recursion loop detected in concept " + concept.getValue());
 			}
-			activeConceptRule.add(concept);
-			Object result = executeScript(concept , attribute.getAD_Rule_ID(), attribute.getColumnType());
-			activeConceptRule.remove(concept);
-			movement.setColumnValue(result); // double rounded in MHRMovement.setColumnValue
-			if (description != null)
-				movement.setDescription(description.toString());
+            activeConceptRule.get().push(concept);
+            try {
+                Object result = executeScript(concept , attribute.getAD_Rule_ID(), attribute.getColumnType());
+                movement.setColumnValue(result); // double rounded in MHRMovement.setColumnValue
+                if (description != null)
+                    movement.setDescription(description.toString());
+            } finally {
+                activeConceptRule.get().pop();
+            }
 		}
 		movement.setProcessed(true);
 		movements.put(concept.getHR_Concept_ID(), movement);
@@ -1522,8 +1645,9 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 
 		movement.setIsManual(isManual);
 		movement.saveEx();
-		movements.put(movement.getHR_Movement_ID() , movement);
-	} // setConcept
+        movements.put(concept.getHR_Concept_ID(), movement);
+
+    } // setConcept
 
 	/**
 	 * Method use to save of calculate on the fly when payroll process is completed
@@ -1546,8 +1670,8 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 		//Create Calculated Movement
 		MHRAttribute attribute = MHRAttribute.getByConceptAndEmployee(concept , employee, getHR_Payroll_ID(),  dateFrom ,dateTo);
 		MHRMovement movement = createMovement(concept, attribute , concept.isPrinted());
-		Optional.ofNullable(qty).ifPresent(q -> movement.setAmount(q));
-		Optional.ofNullable(amount).ifPresent(a -> movement.setAmount(a));
+        Optional.ofNullable(qty).ifPresent(movement::setQty);
+        Optional.ofNullable(amount).ifPresent(a -> movement.setAmount(a));
 		Optional.ofNullable(referenceNo).ifPresent(rn -> movement.setReferenceNo(rn));
 		Optional.ofNullable(description).ifPresent(d -> movement.setDescription(d));
 		movement.saveEx();
@@ -1674,7 +1798,7 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 	 */
 	public double getList (String listSearchKey, double amount, String columnParam)
 	{
-		return getList (listSearchKey, dateFrom, amount, columnParam , columnType);
+		return getList (listSearchKey, dateFrom, amount, columnParam , columnType.get());
 	}
 
 	/**
@@ -2667,7 +2791,7 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 		if (concept == null)
 			throw  new AdempiereException("@HR_Concept_ID@ @NotFound@ " +  conceptValue);
 		payrollConceptId = concept.get_ID();
-		columnType = concept.getColumnType();
+        columnType.set(concept.getColumnType());
 		MHRPeriod  payrollPeriod;
 		employee = MHREmployee.getActiveEmployee(getCtx(), partnerId, get_TrxName());
 		if(getHR_Payroll_ID() > 0)
@@ -2703,41 +2827,41 @@ public class MHRProcess extends X_HR_Process implements DocAction , DocumentReve
 		dateTo = payrollPeriod.getEndDate();
 		MHRPayroll payroll = MHRPayroll.getById(getCtx(), getHR_Payroll_ID(), get_TrxName());
 		// Setting Script context for calcualte rule
-		scriptCtx.clear();
-		scriptCtx.put("process", this);
-		scriptCtx.put("_Process", getHR_Process_ID());
-		scriptCtx.put("_Period", payrollPeriod.getHR_Period_ID());
-		scriptCtx.put("_Payroll", getHR_Payroll_ID());
-		scriptCtx.put("_PayrollValue", Optional.ofNullable(payroll.getValue()).orElse(null));
-		scriptCtx.put("_Department", getHR_Department_ID());
+		scriptCtx.get().clear();
+		scriptCtx.get().put("process", this);
+		scriptCtx.get().put("_Process", getHR_Process_ID());
+		scriptCtx.get().put("_Period", payrollPeriod.getHR_Period_ID());
+		scriptCtx.get().put("_Payroll", getHR_Payroll_ID());
+		scriptCtx.get().put("_PayrollValue", Optional.ofNullable(payroll.getValue()).orElse(null));
+		scriptCtx.get().put("_Department", getHR_Department_ID());
 
 		logger.info("info data - Process " + getHR_Process_ID() + ", Period :" + getHR_Period_ID() + ", Payroll : " + getHR_Payroll_ID() + ", Department : " + getHR_Department_ID());
 
-		scriptCtx.put("_From", dateFrom);
-		scriptCtx.put("_To", dateTo);
-		scriptCtx.put("_Period", payrollPeriod.getPeriodNo());
+		scriptCtx.get().put("_From", dateFrom);
+		scriptCtx.get().put("_To", dateTo);
+		scriptCtx.get().put("_Period", payrollPeriod.getPeriodNo());
 
-		scriptCtx.remove("_DateStart");
-		scriptCtx.remove("_DateEnd");
-		scriptCtx.remove("_Days");
-		scriptCtx.remove("_C_BPartner_ID");
-		scriptCtx.remove("_HR_Employee_ID");
+		scriptCtx.get().remove("_DateStart");
+		scriptCtx.get().remove("_DateEnd");
+		scriptCtx.get().remove("_Days");
+		scriptCtx.get().remove("_C_BPartner_ID");
+		scriptCtx.get().remove("_HR_Employee_ID");
 
-		scriptCtx.put("_DateStart", employee.getStartDate());
-		scriptCtx.put("_DateEnd", employee.getEndDate() == null ? TimeUtil.getDay(2999, 12, 31) : employee.getEndDate());
-		scriptCtx.put("_Days", TimeUtil.getDaysBetween(payrollPeriod.getStartDate(),payrollPeriod.getEndDate()) + 1);
-		scriptCtx.put("_C_BPartner_ID", employee.getC_BPartner_ID());
-		scriptCtx.put("_HR_Employee_ID", employee.getHR_Employee_ID());
-		scriptCtx.put("_Employee", employee);
+		scriptCtx.get().put("_DateStart", employee.getStartDate());
+		scriptCtx.get().put("_DateEnd", employee.getEndDate() == null ? TimeUtil.getDay(2999, 12, 31) : employee.getEndDate());
+		scriptCtx.get().put("_Days", TimeUtil.getDaysBetween(payrollPeriod.getStartDate(),payrollPeriod.getEndDate()) + 1);
+		scriptCtx.get().put("_C_BPartner_ID", employee.getC_BPartner_ID());
+		scriptCtx.get().put("_HR_Employee_ID", employee.getHR_Employee_ID());
+		scriptCtx.get().put("_Employee", employee);
 
-		scriptCtx.remove("_HR_Concept_ID");
-		scriptCtx.remove("_HR_Concept");
-		scriptCtx.put("_HR_Concept_ID", concept.getHR_Concept_ID());
-		scriptCtx.put("_HR_Concept", concept);
-		scriptCtx.remove("_HR_PayrollConcept_ID");
-		//m_scriptCtx.put("_HR_PayrollConcept_ID", payrollConcept.getHR_PayrollConcept_ID());
+		scriptCtx.get().remove("_HR_Concept_ID");
+		scriptCtx.get().remove("_HR_Concept");
+		scriptCtx.get().put("_HR_Concept_ID", concept.getHR_Concept_ID());
+		scriptCtx.get().put("_HR_Concept", concept);
+		scriptCtx.get().remove("_HR_PayrollConcept_ID");
+		//m_scriptCtx.get().put("_HR_PayrollConcept_ID", payrollConcept.getHR_PayrollConcept_ID());
 		//Define movement cache
-		movements = new Hashtable<Integer, MHRMovement>();
+        movements.clear();
 		//Load Payroll Concept
 		payrollConcepts = MHRPayrollConcept.getPayrollConcepts(this);
 		//Load the Manual movement
