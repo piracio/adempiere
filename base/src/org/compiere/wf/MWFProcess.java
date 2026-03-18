@@ -168,6 +168,80 @@ public class MWFProcess extends X_AD_WF_Process
 	}	//	getActivities
 	
 	/**
+	 * Lock workflow process row to enforce consistent lock ordering.
+	 */
+	private void lockProcessRow()
+	{
+		DB.getSQLValueEx(
+			get_TrxName(),
+			"SELECT 1 FROM AD_WF_Process WHERE AD_WF_Process_ID=? FOR UPDATE",
+			getAD_WF_Process_ID()
+		);
+	}
+
+	/**
+	 * Lock workflow activity row to enforce deterministic child locking.
+	 * @param adWfActivityId activity id
+	 */
+	private void lockActivityRow(int adWfActivityId)
+	{
+		DB.getSQLValueEx(
+			get_TrxName(),
+			"SELECT 1 FROM AD_WF_Activity WHERE AD_WF_Activity_ID=? FOR UPDATE",
+			adWfActivityId
+		);
+	}
+
+	/**
+	 * Get activities ordered by activity id.
+	 * @param onlyActive only active activities
+	 * @return ordered activities
+	 */
+	private List<MWFActivity> getActivitiesOrdered(boolean onlyActive)
+	{
+		ArrayList<Object> params = new ArrayList<Object>();
+		StringBuffer whereClause = new StringBuffer("AD_WF_Process_ID=?");
+		params.add(getAD_WF_Process_ID());
+		if (onlyActive)
+		{
+			whereClause.append(" AND Processed=?");
+			params.add(false);
+		}
+		return new Query(getCtx(), MWFActivity.Table_Name, whereClause.toString(), get_TrxName())
+			.setParameters(params)
+			.setOrderBy("AD_WF_Activity_ID")
+			.list();
+	}
+
+	/**
+	 * Get and lock activities ordered by activity id.
+	 * @param onlyActive only active activities
+	 * @return locked ordered activities
+	 */
+	private List<MWFActivity> getActivitiesForUpdate(boolean onlyActive)
+	{
+		ArrayList<Object> params = new ArrayList<Object>();
+		StringBuffer whereClause = new StringBuffer("AD_WF_Process_ID=?");
+		params.add(getAD_WF_Process_ID());
+		if (onlyActive)
+		{
+			whereClause.append(" AND Processed=?");
+			params.add(false);
+		}
+		List<MWFActivity> activities = new Query(getCtx(), MWFActivity.Table_Name, whereClause.toString(), get_TrxName())
+			.setParameters(params)
+			.setOrderBy("AD_WF_Activity_ID")
+			.list();
+
+		for (MWFActivity activity : activities)
+		{
+			lockActivityRow(activity.getAD_WF_Activity_ID());
+		}
+
+		return activities;
+	}
+
+	/**
 	 * 	Get State
 	 *	@return state
 	 */
@@ -200,16 +274,22 @@ public class MWFProcess extends X_AD_WF_Process
 		//
 		if (m_state.isValidNewState(WFState))
 		{
-			log.fine(WFState); 
+			log.fine(WFState);
+			lockProcessRow();
+			List<MWFActivity> activities = null;
 			super.setWFState (WFState);
 			m_state = new StateEngine (getWFState());
 			if (m_state.isClosed())
-				setProcessed(true);
-			save();
-			//	Force close to all Activities
-			if (m_state.isClosed())
 			{
-				Arrays.stream(getActivities(true, true)).forEach(activity -> {
+				setProcessed(true);
+				activities = getActivitiesForUpdate(true);
+			}
+			saveEx();
+			//	Force close to all Activities
+			if (m_state.isClosed() && activities != null)
+			{
+				for (MWFActivity activity : activities)
+				{
 					if (!activity.isClosed())
 					{
 						activity.setTextMsg("Process:" + WFState);
@@ -218,7 +298,7 @@ public class MWFProcess extends X_AD_WF_Process
 					if (!activity.isProcessed())
 						activity.setProcessed(true);
 					activity.saveEx();
-				});
+				}
 			}	//	closed
 		}
 		else	
@@ -245,7 +325,9 @@ public class MWFProcess extends X_AD_WF_Process
 		
 		//
 		set_TrxName(m_po.get_TrxName());
-		MWFActivity[] activities = getActivities (true, true);	//	requery active
+		lockProcessRow();
+		List<MWFActivity> activityList = getActivitiesForUpdate(true);
+		MWFActivity[] activities = activityList.toArray(new MWFActivity[0]);
 		String closedState = null;
 		boolean suspended = false;
 		boolean running = false;

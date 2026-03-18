@@ -62,6 +62,7 @@ import org.compiere.process.ProcessInfo;
 import org.compiere.process.StateEngine;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.DB;
 import org.compiere.util.Msg;
 import org.compiere.util.Trace;
 import org.compiere.util.Trx;
@@ -271,9 +272,10 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 		{
 			String oldState = getWFState();
 			log.fine(oldState + "->"+ wFState + ", Msg=" + getTextMsg()); 
+			lockProcessRow();   // lock parent process first to avoid deadlocks
 			super.setWFState (wFState);
 			m_state = new StateEngine (getWFState());
-			save();			//	closed in MWFProcess.checkActivities()
+			saveEx();			//	closed in MWFProcess.checkActivities()
 			updateEventAudit();			
 			
 			//	Inform Process
@@ -1754,4 +1756,14 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 		}
 		return sb.toString();
 	}	//	getSummary
+	    /**
+     * Lock parent workflow process row to enforce consistent locking order.
+     */
+    private void lockProcessRow() {
+        DB.getSQLValueEx(
+            get_TrxName(),
+            "SELECT 1 FROM AD_WF_Process WHERE AD_WF_Process_ID=? FOR UPDATE",
+            getAD_WF_Process_ID()
+        );
+    }
 }	//	MWFActivity
