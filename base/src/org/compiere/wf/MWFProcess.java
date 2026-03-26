@@ -265,6 +265,7 @@ public class MWFProcess extends X_AD_WF_Process
 			m_po = lastPO;
 		
 		//
+		lockProcessRow(trxName);
 		MWFActivity[] activities = getActivities (true, true, trxName);	//	requery active
 		String closedState = null;
 		boolean suspended = false;
@@ -286,7 +287,7 @@ public class MWFProcess extends X_AD_WF_Process
 			{
 				//	eliminate from active processed
 				activity.setProcessed(true);
-				activity.save();
+				activity.saveEx();
 				//
 				if (closedState == null)
 					closedState = activityWFState;
@@ -623,4 +624,14 @@ public class MWFProcess extends X_AD_WF_Process
 		return m_processMsg;
 	}	//	getProcessMsg
 	
+
+	private void lockProcessRow(String trxName)
+	{
+		DB.getSQLValueEx(
+		trxName,
+		"SELECT 1 FROM AD_WF_Process WHERE AD_WF_Process_ID=? FOR UPDATE",
+		getAD_WF_Process_ID()
+		);
+	}
+
 }	//	MWFProcess

@@ -56,6 +56,7 @@ import org.compiere.process.DocAction;
 import org.compiere.process.ProcessInfo;
 import org.compiere.process.StateEngine;
 import org.compiere.util.DisplayType;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trace;
@@ -261,10 +262,11 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 		if (m_state.isValidNewState(WFState))
 		{
 			String oldState = getWFState();
-			log.fine(oldState + "->"+ WFState + ", Msg=" + getTextMsg()); 
+			log.fine(oldState + "->"+ WFState + ", Msg=" + getTextMsg());
+			lockProcessRow();
 			super.setWFState (WFState);
 			m_state = new StateEngine (getWFState());
-			save();			//	closed in MWFProcess.checkActivities()
+			saveEx();		//	closed in MWFProcess.checkActivities()
 			updateEventAudit();			
 			
 			//	Inform Process
@@ -1785,5 +1787,15 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 		}
 		return sb.toString();
 	}	//	getSummary
+
+
+	private void lockProcessRow()
+	{
+		DB.getSQLValueEx(
+		get_TrxName(),
+		"SELECT 1 FROM AD_WF_Process WHERE AD_WF_Process_ID=? FOR UPDATE",
+		getAD_WF_Process_ID()
+		);
+	}
 
 }	//	MWFActivity
