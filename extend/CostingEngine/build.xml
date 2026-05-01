@@ -1,20 +1,31 @@
 <project name="adempiereLiberoCE" default="dist" basedir=".">
-    <description>
+  <description>
         Building Libero CostEngine.jar
-        by
-        Victor Perez 
+
+        Original author:
+        Victor Perez
         http://www.e-evolution.com
-    </description>
+
+        Maintained and extended by:
+        Prolinux (EFACT Ltda.)
+        hmiranda@prolinux.cl
+
+        Enhancements:
+        - Costing model improvements (negative inventory, adjustments, landed cost)
+        - Test coverage for costing edge cases
+        - Build system portability improvements
+  </description>
   <!-- set global properties for this build -->
+  <property file="build-local.properties"/>
   <property file="build.properties"/>
-  <property name="src" location="../../base/src"/>
+  <property name="src" location="src"/>
   <!--property name="patchSrc" location="patch/base/src"/-->
   <!--property name="liberoPatchSrc" location="patch/libero/src"/-->
   <property name="build" location="build"/>
   <!--property name="buildPatch" location="buildPatch"/-->
   <property name="dist"  location="./dist"/>
 
-  <path id="patch.class.path">	
+  <path id="patch.class.path">
      <fileset dir="${adempiere.home}/lib">
         <include name="*.jar"/>
      </fileset>
@@ -22,17 +33,22 @@
            <include name="*.jar"/>
     </fileset>
   </path>
-  
-  <path id="lib.class.path"> 
-  	<!--fileset dir="${dist}/lib">
-  	           <include name="*.jar"/>
-  	</fileset-->
+
+  <path id="lib.class.path">
+    <!--fileset dir="${dist}/lib">
+               <include name="*.jar"/>
+    </fileset-->
     <fileset dir="${adempiere.home}/lib">
-           <include name="Adempiere.jar"/>
-   </fileset>
-    <fileset dir="${adempiere.trunk}/packages">
-           <include name="*.jar"/>
-    </fileset>
+    <include name="Adempiere.jar"/>
+     </fileset>
+
+     <fileset dir="${adempiere.trunk}/tools/lib">
+       <include name="*.jar"/>
+     </fileset>
+
+     <fileset dir="${adempiere.trunk}/packages">
+       <include name="*.jar"/>
+     </fileset>
   </path>
 
   <target name="init" depends="clean">
@@ -42,22 +58,15 @@
     <tstamp/>
     <!-- Create the build directory structure used by compile -->
     <mkdir dir="${build}"/>
-  	<!--mkdir dir="${buildPatch}"/-->
+    <!--mkdir dir="${buildPatch}"/-->
   </target>
 
   <target name="compile"
-        description="compile the source " >
-    <!-- Compile the java code from ${src} into ${build} -->
-    <javac debug="false" srcdir="${src}" destdir="${build}">    
-      <!--include name="**/org/adempiere/engine/*.java"/>
-      <include name="**/org/adempiere/exceptions/*.java"/>
-      <include name="**/org/eevolution/process/*.java"/-->
+      description="compile the source " >
+    <javac debug="false" includeantruntime="false" srcdir="${src}" destdir="${build}">
+      <exclude name="test/**"/>
       <classpath refid="lib.class.path"/>
     </javac>
-  	<!--javac srcdir="${liberoPatchSrc}" destdir="${build}">
-  	      <include name="**/org/eevolution/model/MPPCostCollector.java"/>
-  	      <classpath refid="lib.class.path"/>
-  	</javac-->
   </target>
 
   <target name="dist"  depends="init, compile, clean"
@@ -76,7 +85,7 @@
     <copy file="${dist}/lib/liberoCE.jar" todir="${adempiere.trunk}/packages/"/>
 
   </target>
-  
+
   <target name="patchDist" depends="patchCompile"
           description="generate the distribution" >
       <!-- Create the distribution directory -->
@@ -92,34 +101,55 @@
       <copy file="${dist}/lib/patches.jar" todir="${adempiere.home}/lib"/>
 
   </target>
-  
+
   <target name="patchCompile" depends="init"
         description="compile the source " >
-  	
+
     <!--javac debug="false" srcdir="${patchSrc}:${src}" destdir="${buildPatch}"-->
- 	<javac debug="false" srcdir="${src}" destdir="${build}">
+  <javac debug="false" srcdir="${src}" destdir="${build}">
       <include name="**/org/adempiere/engine/CostComponent.java"/>
       <include name="**/org/adempiere/engine/CostEngineFactory.java"/>
       <include name="**/org/compiere/acct/*.java"/>
       <include name="**/org/compiere/model/*.java"/>
       <include name="**/org/compiere/process/*.java"/>
-      <include name="**/org/eevolution/model/*.java"/>	
-      <include name="**/org/adempiere/engine/*.java"/>	
+      <include name="**/org/eevolution/model/*.java"/>
+      <include name="**/org/adempiere/engine/*.java"/>
       <classpath refid="patch.class.path"/>
     </javac>
-  	
-  	<!--javac debug="true" srcdir="${liberoPatchSrc}" destdir="${build}">
-  	      <include name="**/org/eevolution/model/*.java"/>
-  	      <classpath refid="patch.class.path"/>
-  	</javac-->
 
-  </target>  
+    <!--javac debug="true" srcdir="${liberoPatchSrc}" destdir="${build}">
+          <include name="**/org/eevolution/model/*.java"/>
+          <classpath refid="patch.class.path"/>
+    </javac-->
+
+  </target>
+
+  <target name="compile-negative-inventory-test"
+      description="compile negative inventory costing test">
+    <javac debug="false" includeantruntime="false" srcdir="${src}" destdir="${build}">
+      <include name="test/java/org/adempiere/NegativeInventoryCostAdjustmentTest.java"/>
+      <classpath refid="lib.class.path"/>
+    </javac>
+  </target>
+
+  <target name="run-negative-inventory-test"
+      depends="compile-negative-inventory-test"
+      description="run negative inventory costing test scaffold">
+    <java classname="org.adempiere.NegativeInventoryCostAdjustmentTest"
+        fork="true"
+        failonerror="true">
+      <classpath>
+        <pathelement location="${build}"/>
+        <path refid="lib.class.path"/>
+      </classpath>
+    </java>
+  </target>
 
   <target name="clean"
         description="clean up" >
     <!-- Delete the ${build} and ${dist} directory trees -->
     <delete dir="${build}"/>
-  	<!--delete dir="${buildPatch}"/-->
+    <!--delete dir="${buildPatch}"/-->
     <delete dir="${dist}"/>
   </target>
 </project>

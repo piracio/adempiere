@@ -72,3 +72,4 @@ utils_dev/mytest.properties
 .gradle/**
 **/bin/**
 /.gradle/
+extend/CostingEngine/build-local.properties
