@@ -107,6 +107,7 @@ public class NegativeInventoryCostAdjustmentTest {
   private void setupContext() {
     Properties ctx = Env.getCtx();
 
+    Env.setContext(ctx, "#COST_DEBUG", "Y");
     Env.setContext(ctx, "#AD_Client_ID", 11);
     Env.setContext(ctx, "#AD_Org_ID", 11);
     Env.setContext(ctx, "#AD_User_ID", 101);
@@ -158,6 +159,7 @@ public class NegativeInventoryCostAdjustmentTest {
               + cost.getCurrentCostPrice()
               + ", CumulatedQty=" + cost.getCumulatedQty()
               + ", CumulatedAmt=" + cost.getCumulatedAmt());
+          System.out.println(">>> CostingMethod = " + cost.getCostingMethod());
         }
 
       System.out.println(">>> Running GenerateCostDetail process AD_Process_ID=53223");
@@ -173,7 +175,7 @@ public class NegativeInventoryCostAdjustmentTest {
 
       // Set parameter: DateAcct range for existing GardenWorld transactions
       MPInstancePara para = new MPInstancePara(instance, 10);
-      para.setParameter("DateAcct", Timestamp.valueOf("2021-12-22 00:00:00"));
+      para.setParameter("DateAcct", Timestamp.valueOf("2021-07-25 00:00:00"));
       para.setParameter("DateAcct", Timestamp.valueOf("2022-01-25 00:00:00"), true);
       para.saveEx();
 

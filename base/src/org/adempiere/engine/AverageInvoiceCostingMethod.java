@@ -28,10 +28,19 @@ import org.compiere.util.Msg;
 /**
  * @author victor.perez@e-evolution.com, www.e-evolution.com
  * @author Systemhaus Westfalia SusanneCalderon <susanne.de.calderon@westfalia-it.com>
- *    <li> Set M_MatchInv_ID and M_MatchPO_ID in Costdetail</>
+ * @author Horacio Miranda <hmiranda@prolinux.cl>, Prolinux (EFACT Ltda.)
+ *    <li> Set M_MatchInv_ID and M_MatchPO_ID in Costdetail</li>
  *    https://github.com/adempiere/adempiere/issues/1918
- * 
+ *
+ *    <li> Add diagnostic debug instrumentation for costing analysis (Negative Inventory test)</li>
+ *    Debug usage:
+ *        Env.setContext(ctx, "#COST_DEBUG", "Y");
+ *
+ *    Notes:
+ *        - Debug is OFF by default (controlled via Env context)
+ *        - No functional behavior changes (instrumentation only)
  */
+
 public class AverageInvoiceCostingMethod extends AbstractCostingMethod
 		implements ICostingMethod {
 
@@ -45,6 +54,13 @@ public class AverageInvoiceCostingMethod extends AbstractCostingMethod
      * @param costLowLevel
      * @param isSalesTransaction
      */
+
+	private void costDebug(String msg) {
+	  if ("Y".equals(Env.getContext(Env.getCtx(), "#COST_DEBUG"))) {
+	      System.out.println(msg);
+	  }
+	}
+
 	public void setCostingMethod(MAcctSchema accountSchema, MTransaction transaction, IDocumentLine model,
                                  MCost dimension, BigDecimal costThisLevel,
                                  BigDecimal costLowLevel, Boolean isSalesTransaction) {
@@ -196,6 +212,14 @@ public class AverageInvoiceCostingMethod extends AbstractCostingMethod
 			
 			//Detect Inventory with zero value
 			//the On hand is different zero and inventory values is zero then
+
+			costDebug(">>> AIC + DEBUG quantityOnHand=" + quantityOnHand);
+			costDebug(">>> AIC + DEBUG movementQuantity=" + movementQuantity);
+			costDebug(">>> AIC + DEBUG resultQty=" + quantityOnHand.add(movementQuantity));
+			costDebug(">>> AIC + DEBUG costThisLevel=" + costThisLevel);
+			costDebug(">>> AIC + DEBUG previousCost="
+			    + getNewCurrentCostPrice(lastCostDetail, accountSchema.getCostingPrecision(), RoundingMode.HALF_UP));
+
 			if (quantityOnHand.signum() != 0
 			&& getNewAccumulatedAmount(lastCostDetail).signum() == 0
 			&& costThisLevel.signum() != 0

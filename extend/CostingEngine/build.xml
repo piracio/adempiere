@@ -126,14 +126,40 @@
 
   <target name="compile-negative-inventory-test"
       description="compile negative inventory costing test">
-    <javac debug="false" includeantruntime="false" srcdir="${src}" destdir="${build}">
+    <javac debug="false" includeantruntime="false" destdir="${build}">
+      <src path="${src}"/>
+      <src path="${adempiere.trunk}/base/src"/>
+
       <include name="test/java/org/adempiere/NegativeInventoryCostAdjustmentTest.java"/>
+      <include name="org/adempiere/engine/AverageInvoiceCostingMethod.java"/>
+
       <classpath refid="lib.class.path"/>
     </javac>
   </target>
 
+  <target name="prepare-negative-inventory-test-data"
+      description="reset costing state for Oak">
+    <exec executable="psql" failonerror="true">
+      <arg value="-v"/>
+      <arg value="ON_ERROR_STOP=1"/>
+      <arg value="-c"/>
+      <arg value="
+        set search_path to adempiere;
+
+        delete from m_costdetail where m_product_id = 123;
+
+        update m_cost
+           set cumulatedqty = 0,
+               cumulatedamt = 0,
+               currentqty = 0,
+               currentcostprice = 0
+         where m_product_id = 123;
+      "/>
+    </exec>
+  </target>
+
   <target name="run-negative-inventory-test"
-      depends="compile-negative-inventory-test"
+      depends="compile-negative-inventory-test, prepare-negative-inventory-test-data"
       description="run negative inventory costing test scaffold">
     <java classname="org.adempiere.NegativeInventoryCostAdjustmentTest"
         fork="true"
