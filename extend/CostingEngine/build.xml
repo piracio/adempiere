@@ -159,7 +159,7 @@
   </target>
 
   <target name="run-negative-inventory-test"
-      depends="compile-negative-inventory-test, prepare-negative-inventory-test-data"
+      depends="compile-negative-inventory-test"
       description="run negative inventory costing test scaffold">
     <java classname="org.adempiere.NegativeInventoryCostAdjustmentTest"
         fork="true"
