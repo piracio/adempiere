@@ -16,14 +16,42 @@
         - Build system portability improvements
   </description>
   <!-- set global properties for this build -->
-  <property file="build-local.properties"/>
+
+  <property name="test.src.dir"
+            value="src/test/java"/>
+
+  <property name="test.build.dir"
+            value="build/test"/>
+
+  <property file="build-local.properties"/> 
+  
   <property file="build.properties"/>
+
   <property name="src" location="src"/>
   <!--property name="patchSrc" location="patch/base/src"/-->
   <!--property name="liberoPatchSrc" location="patch/libero/src"/-->
   <property name="build" location="build"/>
   <!--property name="buildPatch" location="buildPatch"/-->
   <property name="dist"  location="./dist"/>
+
+  <path id="integration.test.classpath">
+    <pathelement location="${build}"/>
+    <pathelement location="${test.build.dir}"/>
+    <pathelement location="${adempiere.trunk}/base/build"/>
+
+    <fileset dir="${adempiere.home}/lib">
+      <include name="*.jar"/>
+    </fileset>
+    <fileset dir="${adempiere.trunk}/tools/lib">
+      <include name="*.jar"/>
+    </fileset>
+    <fileset dir="${adempiere.trunk}/tools/lib/junit">
+      <include name="*.jar"/>
+    </fileset>
+    <fileset dir="${adempiere.trunk}/packages">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
 
   <path id="patch.class.path">
      <fileset dir="${adempiere.home}/lib">
@@ -126,38 +154,24 @@
 
   <target name="compile-negative-inventory-test"
       description="compile negative inventory costing test">
-    <javac debug="false" includeantruntime="false" destdir="${build}">
+
+    <javac debug="false"
+           includeantruntime="false"
+           destdir="${build}">
+
       <src path="${src}"/>
       <src path="${adempiere.trunk}/base/src"/>
+      <src path="${adempiere.trunk}/org.adempiere.test/src/test/java"/>
 
       <include name="test/java/org/adempiere/NegativeInventoryCostAdjustmentTest.java"/>
-      <include name="org/adempiere/engine/AverageInvoiceCostingMethod.java"/>
 
-      <classpath refid="lib.class.path"/>
+      <compilerarg value="-implicit:class"/>
+
+      <classpath refid="integration.test.classpath"/>
+
     </javac>
+
   </target>
-
-  <target name="prepare-negative-inventory-test-data"
-      description="reset costing state for Oak">
-    <exec executable="psql" failonerror="true">
-      <arg value="-v"/>
-      <arg value="ON_ERROR_STOP=1"/>
-      <arg value="-c"/>
-      <arg value="
-        set search_path to adempiere;
-
-        delete from m_costdetail where m_product_id = 123;
-
-        update m_cost
-           set cumulatedqty = 0,
-               cumulatedamt = 0,
-               currentqty = 0,
-               currentcostprice = 0
-         where m_product_id = 123;
-      "/>
-    </exec>
-  </target>
-
   <target name="run-negative-inventory-test"
       depends="compile-negative-inventory-test"
       description="run negative inventory costing test scaffold">

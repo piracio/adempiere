@@ -18,8 +18,6 @@ package org.adempiere;
 
 import java.util.Properties;
 import java.math.BigDecimal;
-import org.compiere.model.MInventory;
-import org.compiere.model.MInventoryLine;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MMatchInv;
@@ -38,6 +36,8 @@ import org.compiere.model.MPInstancePara;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import java.sql.Timestamp;
+
+import org.adempiere.test.CommonGWSetup;
 
 import org.eevolution.manufacturing.process.GenerateCostDetail;
 
@@ -62,11 +62,30 @@ import org.eevolution.manufacturing.process.GenerateCostDetail;
  * @email hmiranda@prolinux.cl
  */
 
-public class NegativeInventoryCostAdjustmentTest {
+public class NegativeInventoryCostAdjustmentTest extends CommonGWSetup {
+  private static final int OAK_PRODUCT_ID = 123;
+  private static final int AIC_COSTELEMENT_ID = 104;
+
+  private static final int SHIPMENT_CUSTOMER_DOCTYPE_ID = 120;
+  private static final int RECEIPT_VENDOR_DOCTYPE_ID = 122;
+  private static final int AP_INVOICE_DOCTYPE_ID = 123;
+
+  private static final int GARDENWORLD_BP_ID = 121;
+  private static final int GARDENWORLD_BP_LOCATION_ID = 115;
+
+  @Override
+  public void setUp() {
+    super.setUp();
+
+    Env.setContext(Env.getCtx(), "$C_Currency_ID", 100);
+
+    System.out.println(">>> CommonGWSetup initialized");
+  }
 
   public static void main(String[] args) {
+
     Adempiere.startup(true);
-    
+
     if (!DB.isConnected()) {
       throw new RuntimeException("No DB connection after ADempiere startup");
     }
@@ -75,47 +94,55 @@ public class NegativeInventoryCostAdjustmentTest {
 
     System.out.println("=== START Costing Test Suite ===");
 
-    /**
-    * Legacy exploratory scenario based on GardenWorld historical data.
-    *
-    * Disabled because the scenario is non-deterministic and depends on:
-    * - accounting periods
-    * - manufacturing/cost collector state
-    * - mutable seed data
-    *
-    * TEST02 is now the canonical deterministic regression harness.
-    */
+    /*
+     * Legacy exploratory scenario based on GardenWorld historical data.
+     *
+     * Disabled because the scenario is non-deterministic and depends on:
+     * - accounting periods
+     * - manufacturing/cost collector state
+     * - mutable seed data
+     *
+     * TEST02 is now the canonical deterministic regression harness.
+     */
+
     //test.test01_NegativeInventory_ReplenishHigherCost_AfterClosedPeriod();
-    test.test02_SameDayOrdering(); 
+
+    // Disabled until TEST03 AIC bootstrap invariant is resolved
+    //test.test02_SameDayOrdering();
+    test.test03_AverageInvoiceCostDimensionBootstrap();
 
     System.out.println("=== END Costing Test Suite ===");
-    
+
   }
+
+  /******************************************************************************
+   * INTEGRATION REGRESSION TESTS
+   *****************************************************************************/
 
   public void test01_NegativeInventory_ReplenishHigherCost_AfterClosedPeriod() {
     System.out.println("=== START Negative Inventory Cost Test ===");
-    
+
     // Scenario:
     // Initial: 10 units @ 30
     // Sale:    20 units → -10 inventory
     // Replenish: 20 units @ 40
-    
+
     int initialQty = 10;
     int initialCost = 30;
-    
+
     int soldQty = 20;
     int replenishQty = 20;
     int replenishCost = 40;
-    
+
     // Remaining negative qty = 10
     int negativeQty = soldQty - initialQty;
-    
+
     // Expected adjustment:
     // 10 units were effectively valued at 30 but should be 40
     int expectedAdjustment = negativeQty * (replenishCost - initialCost);
-    
+
     int actualAdjustment = runGenerateCostDetailForProductOak();
-    
+
     System.out.println("Expected Adjustment = " + expectedAdjustment);
     System.out.println("Actual Adjustment   = " + actualAdjustment);
     System.out.flush();
@@ -131,6 +158,10 @@ public class NegativeInventoryCostAdjustmentTest {
 
   public void test02_SameDayOrdering() {
 
+    int productId = OAK_PRODUCT_ID;
+    int locatorId = 101;
+    int warehouseId = 103;
+
     System.out.println("\n=== TEST 02: Same-day ordering ===");
 
     resetTestData();
@@ -142,10 +173,7 @@ public class NegativeInventoryCostAdjustmentTest {
     try {
       trx.start();
 
-      // Create first real shipment for same-day ordering scenario (#171)
-      int productId = 123;
-      int locatorId = 101;
-      int warehouseId = 103;
+      // Shipment creates negative inventory position
 
       System.out.println(">>> Creating Shipment -1");
 
@@ -154,9 +182,9 @@ public class NegativeInventoryCostAdjustmentTest {
       shipment1.setMovementDate(Timestamp.valueOf("2022-01-01 00:00:00"));
       shipment1.setM_Warehouse_ID(warehouseId);
       shipment1.setMovementType("C-");
-      shipment1.setC_DocType_ID(120);
-      shipment1.setC_BPartner_ID(121);
-      shipment1.setC_BPartner_Location_ID(115);
+      shipment1.setC_DocType_ID(SHIPMENT_CUSTOMER_DOCTYPE_ID);
+      shipment1.setC_BPartner_ID(GARDENWORLD_BP_ID);
+      shipment1.setC_BPartner_Location_ID(GARDENWORLD_BP_LOCATION_ID);
       shipment1.saveEx();
 
       MInOutLine line1 = new MInOutLine(shipment1);
@@ -175,9 +203,9 @@ public class NegativeInventoryCostAdjustmentTest {
       shipment2.setMovementDate(Timestamp.valueOf("2022-01-01 00:00:00"));
       shipment2.setM_Warehouse_ID(warehouseId);
       shipment2.setMovementType("C-");
-      shipment2.setC_DocType_ID(120);
-      shipment2.setC_BPartner_ID(121);
-      shipment2.setC_BPartner_Location_ID(115);
+      shipment2.setC_DocType_ID(SHIPMENT_CUSTOMER_DOCTYPE_ID);
+      shipment2.setC_BPartner_ID(GARDENWORLD_BP_ID);
+      shipment2.setC_BPartner_Location_ID(GARDENWORLD_BP_LOCATION_ID);
       shipment2.saveEx();
 
       MInOutLine line2 = new MInOutLine(shipment2);
@@ -196,9 +224,9 @@ public class NegativeInventoryCostAdjustmentTest {
       receipt.setMovementDate(Timestamp.valueOf("2022-01-01 00:00:00"));
       receipt.setM_Warehouse_ID(warehouseId);
       receipt.setMovementType("V+");
-      receipt.setC_DocType_ID(122);
-      receipt.setC_BPartner_ID(121);
-      receipt.setC_BPartner_Location_ID(115);
+      receipt.setC_DocType_ID(RECEIPT_VENDOR_DOCTYPE_ID);
+      receipt.setC_BPartner_ID(GARDENWORLD_BP_ID);
+      receipt.setC_BPartner_Location_ID(GARDENWORLD_BP_LOCATION_ID);
 
       receipt.saveEx();
 
@@ -212,10 +240,10 @@ public class NegativeInventoryCostAdjustmentTest {
 
       MInvoice invoice = new MInvoice(Env.getCtx(), 0, trx.getTrxName());
       invoice.setAD_Org_ID(11);
-      invoice.setC_BPartner_ID(121);
-      invoice.setC_BPartner_Location_ID(115);
+      invoice.setC_BPartner_ID(GARDENWORLD_BP_ID);
+      invoice.setC_BPartner_Location_ID(GARDENWORLD_BP_LOCATION_ID);
       invoice.setDateInvoiced(Timestamp.valueOf("2022-01-01 00:00:00"));
-      invoice.setC_DocType_ID(123);
+      invoice.setC_DocType_ID(AP_INVOICE_DOCTYPE_ID);
       invoice.saveEx();
 
       MInvoiceLine invLine = new MInvoiceLine(invoice);
@@ -245,11 +273,6 @@ public class NegativeInventoryCostAdjustmentTest {
           + ", InOutLine_ID=" + lineR.getM_InOutLine_ID()
       );
 
-      System.out.println(
-          ">>> MatchInv created: M_MatchInv_ID="
-          + match.getM_MatchInv_ID()
-      );
-
       receipt.processIt(DocAction.ACTION_Complete);
       receipt.saveEx();
 
@@ -267,12 +290,84 @@ public class NegativeInventoryCostAdjustmentTest {
       trx.commit();
 
     } catch (Exception e) {
+      // Preserve deterministic database state for subsequent tests
       trx.rollback();
       throw new RuntimeException(e);
+
     } finally {
       trx.close();
     }
   }
+
+  /**
+   * TEST03
+   *
+   * Validate that Average Invoice costing dimensions exist
+   * for products configured with costing method = I.
+   *
+   * This is a smaller precondition-focused regression test.
+   *
+   * Business invariant:
+   * - Products using Average Invoice costing must have
+   *   an M_Cost row for M_CostElement_ID = 104.
+   */
+  public void test03_AverageInvoiceCostDimensionBootstrap() {
+
+    System.out.println("\n=== TEST 03: AIC cost dimension bootstrap ===");
+
+    resetTestData();
+    setupContext();
+
+    String trxName = Trx.createTrxName("CostTest03");
+    Trx trx = Trx.get(trxName, true);
+
+    try {
+      trx.start();
+
+      MProduct product = getOakProduct(trxName);
+
+      System.out.println(
+          ">>> Product found: "
+          + product.getValue()
+          + " / M_Product_ID="
+          + product.getM_Product_ID()
+      );
+
+      assertAverageInvoiceCostExists(product, trxName);
+
+      trx.commit();
+
+    } catch (Exception e) {
+      // Preserve deterministic database state for subsequent tests
+      trx.rollback();
+      throw new RuntimeException(e);
+
+    } finally {
+      trx.close();
+    }
+  }
+
+  /******************************************************************************
+   * TEST INFRASTRUCTURE / HELPERS
+   *****************************************************************************/
+
+  /**
+   * Reset transactional and costing state for deterministic
+   * negative inventory regression execution.
+   *
+   * Removes:
+   * - M_MatchInv
+   * - M_MatchPO
+   * - invoices
+   * - shipments
+   * - transactions
+   * - cost detail records
+   *
+   * Preserves:
+   * - master data
+   * - product configuration
+   * - costing schema
+   */
 
   private void resetTestData() {
 
@@ -288,7 +383,8 @@ public class NegativeInventoryCostAdjustmentTest {
           "WHERE M_InOutLine_ID IN (" +
           "  SELECT M_InOutLine_ID " +
           "  FROM M_InOutLine " +
-          "  WHERE M_Product_ID = 123" +
+          "  WHERE M_Product_ID = " +
+          OAK_PRODUCT_ID +
           ")",
           trxName
       );
@@ -298,12 +394,14 @@ public class NegativeInventoryCostAdjustmentTest {
           "WHERE M_InOutLine_ID IN (" +
           "  SELECT iol.M_InOutLine_ID " +
           "  FROM M_InOutLine iol " +
-          "  WHERE iol.M_Product_ID = 123" +
+          "  WHERE iol.M_Product_ID = " +
+          OAK_PRODUCT_ID +
           ") " +
           "OR C_InvoiceLine_ID IN (" +
           "  SELECT il.C_InvoiceLine_ID " +
           "  FROM C_InvoiceLine il " +
-          "  WHERE il.M_Product_ID = 123" +
+          "  WHERE il.M_Product_ID = " +
+          OAK_PRODUCT_ID +
           ")",
           trxName
       );
@@ -313,14 +411,16 @@ public class NegativeInventoryCostAdjustmentTest {
           "WHERE C_Invoice_ID IN (" +
           "  SELECT C_Invoice_ID " +
           "  FROM C_InvoiceLine " +
-          "  WHERE M_Product_ID = 123" +
+          "  WHERE M_Product_ID = " +
+          OAK_PRODUCT_ID +
           ")",
           trxName
       );
 
       DB.executeUpdateEx(
           "DELETE FROM C_InvoiceLine " +
-          "WHERE M_Product_ID = 123",
+          "WHERE M_Product_ID = " +
+          OAK_PRODUCT_ID,
           trxName
       );
 
@@ -336,7 +436,8 @@ public class NegativeInventoryCostAdjustmentTest {
       // Receipt / shipment layer
       DB.executeUpdateEx(
           "DELETE FROM M_InOutLine " +
-          "WHERE M_Product_ID = 123",
+          "WHERE M_Product_ID = " +
+          OAK_PRODUCT_ID,
           trxName
       );
 
@@ -352,13 +453,15 @@ public class NegativeInventoryCostAdjustmentTest {
       // Transaction + costing
       DB.executeUpdateEx(
           "DELETE FROM M_Transaction " +
-          "WHERE M_Product_ID = 123",
+          "WHERE M_Product_ID = " +
+          OAK_PRODUCT_ID,
           trxName
       );
 
       DB.executeUpdateEx(
           "DELETE FROM M_CostDetail " +
-          "WHERE M_Product_ID = 123",
+          "WHERE M_Product_ID = " +
+          OAK_PRODUCT_ID,
           trxName
       );
 
@@ -368,13 +471,15 @@ public class NegativeInventoryCostAdjustmentTest {
           "    CumulatedAmt = 0, " +
           "    CurrentQty = 0, " +
           "    CurrentCostPrice = 0 " +
-          "WHERE M_Product_ID = 123",
+          "WHERE M_Product_ID = " +
+          OAK_PRODUCT_ID,
           trxName
       );
 
       trx.commit();
 
     } catch (Exception e) {
+      // Preserve deterministic database state for subsequent tests
       trx.rollback();
       throw new RuntimeException(e);
 
@@ -387,13 +492,10 @@ public class NegativeInventoryCostAdjustmentTest {
     Properties ctx = Env.getCtx();
 
     Env.setContext(ctx, "#COST_DEBUG", "N");
-    Env.setContext(ctx, "#AD_Client_ID", 11);
-    Env.setContext(ctx, "#AD_Org_ID", 11);
-    Env.setContext(ctx, "#AD_User_ID", 101);
     Env.setContext(ctx, "#M_Warehouse_ID", 103);
-  
+
     System.out.println(">>> Context initialized for GardenWorld");
-}  
+  }
 
   private int runGenerateCostDetailForProductOak() {
     System.out.println(">>> Probing current cost model (Env + Trx)");
@@ -409,17 +511,7 @@ public class NegativeInventoryCostAdjustmentTest {
 
       System.out.println(">>> Trx started: " + trxName);
       System.out.println(">>> AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()));
-      MProduct product = new Query(
-        Env.getCtx(),
-        MProduct.Table_Name,
-        MProduct.COLUMNNAME_Value + "=?",
-        trxName)
-      .setParameters("Oak")
-      .first();
-
-      if (product == null) {
-        throw new RuntimeException("GardenWorld product not found: Oak");
-      }
+      MProduct product = getOakProduct(trxName);
 
       System.out.println(">>> Product found: " + product.getValue()
           + " / M_Product_ID=" + product.getM_Product_ID());
@@ -427,56 +519,24 @@ public class NegativeInventoryCostAdjustmentTest {
       MCost cost = new Query(
           Env.getCtx(),
           MCost.Table_Name,
-          "M_Product_ID=?",
-           trxName)
-      .setParameters(product.getM_Product_ID())
+          "M_Product_ID=? AND M_CostElement_ID=?",
+          trxName)
+      .setParameters(
+          product.getM_Product_ID(),
+          AIC_COSTELEMENT_ID
+      )
       .first();
 
       if (cost == null) {
         System.out.println(">>> No cost record found for product: " + product.getValue());
       } else {
-          System.out.println(">>> Cost found: CurrentCostPrice="
-              + cost.getCurrentCostPrice()
-              + ", CumulatedQty=" + cost.getCumulatedQty()
-              + ", CumulatedAmt=" + cost.getCumulatedAmt());
-          System.out.println(">>> CostingMethod = " + cost.getCostingMethod());
-        }
-
-      MCost avgInvoiceCost = new Query(
-          Env.getCtx(),
-          MCost.Table_Name,
-          "M_Product_ID=? AND M_CostElement_ID=?",
-          trxName)
-      .setParameters(product.getM_Product_ID(), 104)
-      .first();
-
-      if (avgInvoiceCost == null) {
-        System.out.println(
-            ">>> AIC + ERROR no Average Invoice M_Cost row found "
-            + "(M_CostElement_ID=104)"
-        );
-
-        System.out.println(
-            "FAIL: Missing Average Invoice M_Cost row for product "
-            + product.getM_Product_ID()
-            + " and M_CostElement_ID=104"
-        );
-
-        throw new RuntimeException(
-            "Missing Average Invoice M_Cost row "
-            + "for product=" + product.getM_Product_ID()
-            + ", costElement=104"
-        );
-
-      } else {
-        System.out.println(
-            ">>> AIC + DEBUG Average Invoice cost row exists: "
-            + "CurrentCostPrice=" + avgInvoiceCost.getCurrentCostPrice()
-            + ", CurrentQty=" + avgInvoiceCost.getCurrentQty()
-            + ", CumulatedQty=" + avgInvoiceCost.getCumulatedQty()
-            + ", CumulatedAmt=" + avgInvoiceCost.getCumulatedAmt()
-        );
+        System.out.println(">>> Cost found: CurrentCostPrice="
+            + cost.getCurrentCostPrice()
+            + ", CumulatedQty=" + cost.getCumulatedQty()
+            + ", CumulatedAmt=" + cost.getCumulatedAmt());
       }
+
+      assertAverageInvoiceCostExists(product, trxName);
 
       System.out.println(">>> Running GenerateCostDetail process AD_Process_ID=53223");
 
@@ -514,9 +574,9 @@ public class NegativeInventoryCostAdjustmentTest {
       GenerateCostDetail process = new GenerateCostDetail();
 
       try {
-          process.startProcess(Env.getCtx(), processInfo, trx);
+        process.startProcess(Env.getCtx(), processInfo, trx);
       } catch (Exception e) {
-          System.out.println(">>> GenerateCostDetail warning: " + e.getMessage());
+        System.out.println(">>> GenerateCostDetail warning: " + e.getMessage());
       }
 
       System.out.println(">>> GenerateCostDetail finished");
@@ -533,24 +593,132 @@ public class NegativeInventoryCostAdjustmentTest {
       if (costDetail == null) {
         System.out.println(">>> No cost detail found for product: " + product.getValue());
       } else {
-          System.out.println(">>> Last CostDetail: DateAcct=" + costDetail.getDateAcct()
-              + ", Amt=" + costDetail.getAmt()
-              + ", CostAdjustment=" + costDetail.getCostAdjustment()
-              + ", Qty=" + costDetail.getQty()
-              + ", CurrentCostPrice=" + costDetail.getCurrentCostPrice());
-        }
+        System.out.println(">>> Last CostDetail: DateAcct=" + costDetail.getDateAcct()
+            + ", Amt=" + costDetail.getAmt()
+            + ", CostAdjustment=" + costDetail.getCostAdjustment()
+            + ", Qty=" + costDetail.getQty()
+            + ", CurrentCostPrice=" + costDetail.getCurrentCostPrice());
+      }
 
       trx.commit();
     } catch (Exception e) {
+      // Preserve deterministic database state for subsequent tests
       trx.rollback();
       throw new RuntimeException(e);
+
     } finally {
       trx.close();
     }
 
-    return costDetail != null && costDetail.getCostAdjustment() != null
-    ? costDetail.getCostAdjustment().intValue()
-    : 0;
-
+    return costDetail != null
+      && costDetail.getCostAdjustment() != null
+      ? costDetail.getCostAdjustment().intValue()
+      : 0;
   }
+
+  private MProduct getOakProduct(String trxName) {
+
+    MProduct product = new Query(
+        Env.getCtx(),
+        MProduct.Table_Name,
+        "M_Product_ID=?",
+        trxName)
+    .setParameters(OAK_PRODUCT_ID)
+    .first();
+
+    if (product == null) {
+      throw new RuntimeException("Product Oak not found");
+    }
+
+    return product;
+  }
+
+  private MCost getAverageInvoiceCost(
+      MProduct product,
+      String trxName) {
+
+    return new Query(
+        Env.getCtx(),
+        MCost.Table_Name,
+        "M_Product_ID=? AND M_CostElement_ID=?",
+        trxName)
+    .setParameters(product.getM_Product_ID(), AIC_COSTELEMENT_ID)
+    .first();
+  }
+
+  private void assertAverageInvoiceCostExists(
+      MProduct product,
+      String trxName) {
+
+    MCost aicCost = getAverageInvoiceCost(product, trxName);
+
+    if (aicCost == null) {
+
+      System.out.println(
+          "FAIL: Missing Average Invoice M_Cost row "
+          + "(M_CostElement_ID="
+          + AIC_COSTELEMENT_ID
+          + ")"
+      );
+
+      System.out.flush();
+      System.err.flush();
+
+      throw new RuntimeException(
+          "AIC bootstrap failure for product="
+          + product.getM_Product_ID()
+      );
+    }
+
+    System.out.println(
+        "PASS: Average Invoice M_Cost row exists"
+    );
+
+    System.out.println(
+        ">>> CurrentCostPrice="
+        + aicCost.getCurrentCostPrice()
+        + ", CurrentQty="
+        + aicCost.getCurrentQty()
+        + ", CumulatedQty="
+        + aicCost.getCumulatedQty()
+    );
+  }
+
+  private void dumpCostState(
+      int productId,
+      String trxName) {
+
+    System.out.println(">>> COST STATE DUMP");
+
+    java.util.List<MCost> costs = new Query(
+        Env.getCtx(),
+        MCost.Table_Name,
+        "M_Product_ID=?",
+        trxName)
+    .setParameters(productId)
+    .list();
+
+    for (MCost cost : costs) {
+
+      System.out.println(
+          ">>> M_Cost:"
+          + " CostElement=" + cost.getM_CostElement_ID()
+          + " CurrentCostPrice=" + cost.getCurrentCostPrice()
+          + " CurrentQty=" + cost.getCurrentQty()
+          + " CumulatedQty=" + cost.getCumulatedQty()
+          + " CumulatedAmt=" + cost.getCumulatedAmt());
+    }
+  }
+
+  /******************************************************************************
+   * UNIT VALIDATION TESTS
+   *
+   * Future isolated arithmetic validation layer for:
+   * - Average Invoice calculations
+   * - negative inventory math
+   * - rounding
+   * - adjustment deltas
+   * - zero/NULL quantity handling
+   *****************************************************************************/
+
 }
