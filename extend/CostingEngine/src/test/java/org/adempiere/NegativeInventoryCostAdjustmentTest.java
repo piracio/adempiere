@@ -63,6 +63,11 @@ import org.eevolution.manufacturing.process.GenerateCostDetail;
  */
 
 public class NegativeInventoryCostAdjustmentTest extends CommonGWSetup {
+
+  /******************************************************************************
+   * REGRESSION FIXTURE CONSTANTS
+   *****************************************************************************/
+
   private static final int OAK_PRODUCT_ID = 123;
   private static final int AIC_COSTELEMENT_ID = 104;
 
@@ -611,9 +616,9 @@ public class NegativeInventoryCostAdjustmentTest extends CommonGWSetup {
     }
 
     return costDetail != null
-      && costDetail.getCostAdjustment() != null
-      ? costDetail.getCostAdjustment().intValue()
-      : 0;
+        && costDetail.getCostAdjustment() != null
+        ? costDetail.getCostAdjustment().intValue()
+        : 0;
   }
 
   private MProduct getOakProduct(String trxName) {
