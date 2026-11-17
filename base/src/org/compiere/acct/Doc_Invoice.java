@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.logging.Level;
 
+import org.adempiere.engine.CostEngine;
 import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MClientInfo;
@@ -872,17 +873,17 @@ public class Doc_Invoice extends Doc
 					factLine.setM_Product_ID(landedCostAllocation.getM_Product_ID());
 				}
 				//cost to Cost Adjustment
-				BigDecimal costAllocation =  landedCostAllocation.getPriceActual().multiply(landedCostAllocation.getQty());
+				BigDecimal costAllocation = CostEngine.getLandedCostAmount(as, landedCostAllocation);
 				BigDecimal costAdjustment =  costAllocation.subtract(assetAmount);
 				setIsMultiCurrency(landedCostAllocation.getC_Currency_ID()!=as.getC_Currency_ID());
 				if (costAdjustment.signum() != 0) {
 					if (isDebit)
 						debitAmount = costAdjustment;
 					else
-						creditAmount = costAdjustment;
+						creditAmount = costAdjustment.negate();
 
 					factLine = fact.createLine(line, productCost.getAccount(ProductCost.ACCTTYPE_P_CostAdjustment,as),
-							getC_Currency_ID(), debitAmount, creditAmount);
+							as.getC_Currency_ID(), debitAmount, creditAmount);
 				}
 			}	
 			else

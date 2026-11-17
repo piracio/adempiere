@@ -96,6 +96,7 @@ public class MCostDetail extends X_M_CostDetail
      * @param trxName
      * @return
      */
+    @Deprecated
     public static BigDecimal getQtyOnHandByASIAndSeqNo (Properties context , int productId , int costTypeId , int costElementId , int attributeSetInstanceId, int seqNo , String trxName)
     {
         List<Object> parameters = new ArrayList<Object>();
@@ -113,6 +114,30 @@ public class MCostDetail extends X_M_CostDetail
         return new Query(context, Table_Name, whereClause.toString(), trxName)
                 .setParameters(parameters)
                 .sum(I_M_CostDetail.COLUMNNAME_Qty);
+    }
+
+    /** Quantity for one costing dimension and ASI, without mixing accounting schemas. */
+    public static BigDecimal getQtyOnHandByASIAndSeqNo(MCost dimension, int attributeSetInstanceId,
+            int seqNo, String costingLevel, String trxName) {
+        StringBuilder where = new StringBuilder("AD_Client_ID=? AND C_AcctSchema_ID=? AND M_Product_ID=?"
+                + " AND M_CostType_ID=? AND M_CostElement_ID=? AND COALESCE(M_AttributeSetInstance_ID,0)=? AND SeqNo<=?");
+        List<Object> parameters = new ArrayList<Object>();
+        parameters.add(dimension.getAD_Client_ID());
+        parameters.add(dimension.getC_AcctSchema_ID());
+        parameters.add(dimension.getM_Product_ID());
+        parameters.add(dimension.getM_CostType_ID());
+        parameters.add(dimension.getM_CostElement_ID());
+        parameters.add(attributeSetInstanceId);
+        parameters.add(seqNo);
+        if (MAcctSchema.COSTINGLEVEL_Organization.equals(costingLevel)) {
+            where.append(" AND AD_Org_ID=?");
+            parameters.add(dimension.getAD_Org_ID());
+        } else if (MAcctSchema.COSTINGLEVEL_Warehouse.equals(costingLevel)) {
+            where.append(" AND M_Warehouse_ID=?");
+            parameters.add(dimension.getM_Warehouse_ID());
+        }
+        return new Query(dimension.getCtx(), Table_Name, where.toString(), trxName)
+                .setParameters(parameters).sum(I_M_CostDetail.COLUMNNAME_Qty);
     }
 
 
@@ -437,6 +462,60 @@ public class MCostDetail extends X_M_CostDetail
 		.list();
 	}
 	
+    /** Last state before an adjustment, including earlier events on the same receipt. */
+    public static MCostDetail getAdjustmentBasis(MCost dimension, java.sql.Timestamp dateAcct,
+            MCostDetail adjustment, String costingLevel, String trxName) {
+        StringBuilder where = new StringBuilder("AD_Client_ID=? AND C_AcctSchema_ID=? AND M_Product_ID=?"
+                + " AND M_CostType_ID=? AND M_CostElement_ID=? AND DateAcct<=? AND Processing='N'");
+        List<Object> parameters = new ArrayList<Object>();
+        parameters.add(dimension.getAD_Client_ID());
+        parameters.add(dimension.getC_AcctSchema_ID());
+        parameters.add(dimension.getM_Product_ID());
+        parameters.add(dimension.getM_CostType_ID());
+        parameters.add(dimension.getM_CostElement_ID());
+        parameters.add(dateAcct);
+        if (adjustment != null) {
+            where.append(" AND SeqNo<?");
+            parameters.add(adjustment.getSeqNo());
+        }
+        if (MAcctSchema.COSTINGLEVEL_Organization.equals(costingLevel)) {
+            where.append(" AND AD_Org_ID=?"); parameters.add(dimension.getAD_Org_ID());
+        } else if (MAcctSchema.COSTINGLEVEL_Warehouse.equals(costingLevel)) {
+            where.append(" AND M_Warehouse_ID=?"); parameters.add(dimension.getM_Warehouse_ID());
+        } else if (MAcctSchema.COSTINGLEVEL_BatchLot.equals(costingLevel)) {
+            where.append(" AND M_AttributeSetInstance_ID=?"); parameters.add(dimension.getM_AttributeSetInstance_ID());
+        }
+        return new Query(dimension.getCtx(), Table_Name, where.toString(), trxName)
+                .setParameters(parameters).setOrderBy("SeqNo DESC, M_CostDetail_ID DESC").first();
+    }
+
+    /** Previous physical costing event, excluding the event being replayed. */
+    public static MCostDetail getBefore(MCostDetail costDetail, String costingLevel) {
+        StringBuilder where = new StringBuilder("AD_Client_ID=? AND C_AcctSchema_ID=?"
+                + " AND M_Product_ID=? AND M_CostType_ID=? AND M_CostElement_ID=?"
+                + " AND SeqNo<? AND M_Transaction_ID<>? AND Processing='N'");
+        List<Object> parameters = new ArrayList<Object>();
+        parameters.add(costDetail.getAD_Client_ID());
+        parameters.add(costDetail.getC_AcctSchema_ID());
+        parameters.add(costDetail.getM_Product_ID());
+        parameters.add(costDetail.getM_CostType_ID());
+        parameters.add(costDetail.getM_CostElement_ID());
+        parameters.add(costDetail.getSeqNo());
+        parameters.add(costDetail.getM_Transaction_ID());
+        if (MAcctSchema.COSTINGLEVEL_Organization.equals(costingLevel)) {
+            where.append(" AND AD_Org_ID=?");
+            parameters.add(costDetail.getAD_Org_ID());
+        } else if (MAcctSchema.COSTINGLEVEL_Warehouse.equals(costingLevel)) {
+            where.append(" AND M_Warehouse_ID=?");
+            parameters.add(costDetail.getM_Warehouse_ID());
+        } else if (MAcctSchema.COSTINGLEVEL_BatchLot.equals(costingLevel)) {
+            where.append(" AND M_AttributeSetInstance_ID=?");
+            parameters.add(costDetail.getM_AttributeSetInstance_ID());
+        }
+        return new Query(costDetail.getCtx(), Table_Name, where.toString(), costDetail.get_TrxName())
+                .setParameters(parameters).setOrderBy("SeqNo DESC, M_CostDetail_ID DESC").first();
+    }
+
 	/**
 	 * Get a list of the Cost Detail After the Accounting Date 
 	 * @param costDetail Cost Detail
@@ -476,8 +555,10 @@ public class MCostDetail extends X_M_CostDetail
 		whereClause.append( MCostDetail.COLUMNNAME_M_CostDetail_ID).append("<>? AND ");
 		params.add(costDetail.getM_CostDetail_ID());
 		
-		whereClause.append( MCostDetail.COLUMNNAME_M_Transaction_ID).append("<>? AND ");
-		params.add(costDetail.getM_Transaction_ID());
+        if (costDetail.getC_LandedCostAllocation_ID() == 0) {
+            whereClause.append(MCostDetail.COLUMNNAME_M_Transaction_ID).append("<>? AND ");
+            params.add(costDetail.getM_Transaction_ID());
+        }
 		
 		whereClause.append(MCostDetail.COLUMNNAME_SeqNo).append(">=? AND ");
 		params.add(costDetail.getSeqNo());
@@ -1062,7 +1143,6 @@ public class MCostDetail extends X_M_CostDetail
 		whereClause.append(COLUMNNAME_AD_Client_ID).append("=? AND ")
 				   	.append(COLUMNNAME_C_AcctSchema_ID).append("=? AND ")
 				   	.append(COLUMNNAME_M_Product_ID).append("=? AND ")
-				   	.append(COLUMNNAME_M_AttributeSetInstance_ID).append("=? AND ")
 				   	.append(COLUMNNAME_M_CostType_ID).append("=? AND ")
 				   	.append(COLUMNNAME_M_CostElement_ID).append("=? AND ")
 				   	.append(COLUMNNAME_C_InvoiceLine_ID).append("=? AND ")
@@ -1073,7 +1153,6 @@ public class MCostDetail extends X_M_CostDetail
 				landedCostAllocation.getAD_Client_ID(),
 				acctSchemaId,
 				landedCostAllocation.getM_Product_ID(),
-				landedCostAllocation.getM_AttributeSetInstance_ID(),
 				costTypeId,
 				landedCostAllocation.getM_CostElement_ID(),
 				landedCostAllocation.getC_InvoiceLine_ID(),

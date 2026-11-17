@@ -160,8 +160,7 @@ public class Doc_MatchInv extends Doc
 		//  NotInvoicedReceipt      DR
 		//  From Receipt
 		BigDecimal multiplier = getQty()
-			.divide(m_receiptLine.getMovementQty(), 12, RoundingMode.HALF_UP)
-			.abs();
+			.divide(m_receiptLine.getMovementQty(), 12, RoundingMode.HALF_UP);
 		FactLine dr = fact.createLine (null,
 			getAccount(Doc.ACCTTYPE_NotInvoicedReceipts, as),
 			as.getC_Currency_ID(), Env.ONE, null);			// updated below
@@ -173,11 +172,13 @@ public class Doc_MatchInv extends Doc
         dr.setM_Product_ID(m_receiptLine.getM_Product_ID());
 		String documentBaseTypeReceipt = DB.getSQLValueString(m_receiptLine.get_TrxName() , "SELECT DocBaseType FROM C_DocType WHERE C_DocType_ID=?", m_receiptLine.getParent().getC_DocType_ID());
 		BigDecimal quantityReceipt = MDocType.DOCBASETYPE_MaterialReceipt.equals(documentBaseTypeReceipt) ? getQty() : getQty().negate();
+        BigDecimal sourceReceiptQuantity = MDocType.DOCBASETYPE_MaterialReceipt.equals(documentBaseTypeReceipt)
+                ? m_receiptLine.getMovementQty() : m_receiptLine.getMovementQty().negate();
 		dr.setQty(quantityReceipt);
 		BigDecimal temp = dr.getAcctBalance();
 		//	Set AmtAcctCr/Dr from Receipt (sets also Project)
 		if (!dr.updateReverseLine (MInOut.Table_ID, 		//	Amt updated
-			m_receiptLine.getM_InOut_ID(), m_receiptLine.getM_InOutLine_ID(), quantityReceipt , multiplier))
+			m_receiptLine.getM_InOut_ID(), m_receiptLine.getM_InOutLine_ID(), sourceReceiptQuantity, multiplier))
 		{
 			if (m_receiptLine.getM_InOut().isPosted())
 			{
@@ -204,8 +205,7 @@ public class Doc_MatchInv extends Doc
 			expense = m_pc.getAccount(ProductCost.ACCTTYPE_P_Expense, as);
 		BigDecimal LineNetAmt = m_invoiceLine.getLineNetAmt();
 		multiplier = getQty()
-			.divide(m_invoiceLine.getQtyInvoiced(), 12, RoundingMode.HALF_UP)
-			.abs();
+			.divide(m_invoiceLine.getQtyInvoiced(), 12, RoundingMode.HALF_UP);
 		if (multiplier.compareTo(Env.ONE) != 0)
 			LineNetAmt = LineNetAmt.multiply(multiplier);
 		if (m_pc.isService())
@@ -274,10 +274,12 @@ public class Doc_MatchInv extends Doc
 			temp = cr.getAcctBalance();
 			String documentBaseTypeInvoice = DB.getSQLValueString(m_invoiceLine.get_TrxName() , "SELECT DocBaseType FROM C_DocType WHERE C_DocType_ID=?", m_invoiceLine.getParent().getC_DocType_ID());
 			BigDecimal quantityInvoice = MDocType.DOCBASETYPE_APInvoice.equals(documentBaseTypeInvoice) ?  getQty().negate() : getQty() ;
+            BigDecimal sourceInvoiceQuantity = MDocType.DOCBASETYPE_APInvoice.equals(documentBaseTypeInvoice)
+                    ? m_invoiceLine.getQtyInvoiced().negate() : m_invoiceLine.getQtyInvoiced();
 			cr.setQty(quantityInvoice);
 			//	Set AmtAcctCr/Dr from Invoice (sets also Project)
 			if (as.isAccrual() && !cr.updateReverseLine (MInvoice.Table_ID, 		//	Amt updated
-				m_invoiceLine.getC_Invoice_ID(), m_invoiceLine.getC_InvoiceLine_ID(), quantityInvoice , multiplier))
+				m_invoiceLine.getC_Invoice_ID(), m_invoiceLine.getC_InvoiceLine_ID(), sourceInvoiceQuantity, multiplier))
 			{
 				p_Error = "Invoice not posted yet";
 				return null;

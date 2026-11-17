@@ -1426,7 +1426,7 @@ public class MInOut extends X_M_InOut implements DocAction , DocumentReversalEna
 						materialTransaction.setM_InOutLine_ID(inOutLine.getM_InOutLine_ID());
 						if (!materialTransaction.save())
 						{
-							processMsg = "Could not create Material Transaction (MA)";
+							processMsg = CLogger.retrieveErrorString("Could not create Material Transaction (MA)");
 							return DocAction.STATUS_Invalid;
 						}
 					}

@@ -182,7 +182,7 @@ public abstract class AbstractCostingMethod implements ICostingMethod {
 		}
 
         else if (model instanceof MMatchPO){
-            MMatchPO original = new MMatchPO(model.getCtx(), ((MMatchInv) model).getReversal_ID(), model.get_TrxName());
+            MMatchPO original = new MMatchPO(model.getCtx(), ((MMatchPO) model).getReversal_ID(), model.get_TrxName());
             StringBuffer whereClause = new StringBuffer();
             whereClause.append(" M_CostType_ID=" + dimension.getM_CostType_ID());
             whereClause.append(" AND M_CostElement_ID=" + dimension.getM_CostElement_ID());

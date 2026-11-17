@@ -18,6 +18,9 @@ package org.compiere.acct;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.List;
+import org.adempiere.engine.CostEngine;
+import org.compiere.model.MCostType;
 import java.util.logging.Level;
 
 import org.compiere.model.MAccount;
@@ -172,8 +175,15 @@ public class Doc_InOut extends Doc
 				if(!isValidLine(line)) {
 					continue;
 				}
-				BigDecimal costs = null;			
-				for (MCostDetail cost :  line.getCostDetail(as,false))
+                List<MCostDetail> lineCosts = line.getCostDetail(as, false);
+                if (m_Reversal_ID == 0 && line.getReversalLine_ID() == 0
+                        && line.getProduct() != null && line.getProduct().isStocked()) {
+                    MCostType type = MCostType.get(as, line.getM_Product_ID(), line.getAD_Org_ID());
+                    CostEngine.requireSalesCost(as, line.getM_Product_ID(), line.get_ID(), type.get_ID(),
+                            getDateAcct(), lineCosts);
+                }
+				BigDecimal costs = null;
+				for (MCostDetail cost : lineCosts)
 				{	 
 					if (!MCostDetail.existsCost(cost))
 						continue;

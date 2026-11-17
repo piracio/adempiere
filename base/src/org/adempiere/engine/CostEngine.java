@@ -18,6 +18,7 @@ package org.adempiere.engine;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import org.adempiere.exceptions.ZeroSalesCostException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,6 +52,7 @@ import org.compiere.model.MCostElement;
 import org.compiere.model.MCostType;
 import org.compiere.model.MDocType;
 import org.compiere.model.MInOutLine;
+import org.compiere.model.MInvoice;
 import org.compiere.model.MInventoryLine;
 import org.compiere.model.MLandedCostAllocation;
 import org.compiere.model.MMatchInv;
@@ -276,8 +278,38 @@ public class CostEngine {
 					createCostDetail(accountSchema, costType, costElement, transaction, model, client.isCostImmediate());
 				}
 			}
+            if (client.isCostImmediate())
+                validateSalesCost(accountSchema, transaction, model);
 		}
 	}
+
+
+    /** Validate a completed set of components, never an individual parallel cost element. */
+    public static void validateSalesCost(MAcctSchema schema, MTransaction transaction, IDocumentLine model) {
+        if (!(model instanceof MInOutLine) || !model.isSOTrx() || model.getReversalLine_ID() > 0
+                || !MTransaction.MOVEMENTTYPE_CustomerShipment.equals(transaction.getMovementType())
+                || transaction.getMovementQty().signum() == 0)
+            return;
+        MInOutLine line = (MInOutLine) model;
+        if (!line.getM_Product().isStocked())
+            return;
+        MCostType type = MCostType.get(schema, transaction.getM_Product_ID(), transaction.getAD_Org_ID());
+        List<MCostDetail> details = new Query(transaction.getCtx(), MCostDetail.Table_Name,
+                "AD_Client_ID=? AND C_AcctSchema_ID=? AND M_Product_ID=? AND M_CostType_ID=? AND M_Transaction_ID=?",
+                transaction.get_TrxName()).setParameters(transaction.getAD_Client_ID(), schema.get_ID(),
+                        transaction.getM_Product_ID(), type.get_ID(), transaction.get_ID()).list();
+        requireSalesCost(schema, line.getM_Product_ID(), line.get_ID(), type.get_ID(), line.getDateAcct(), details);
+    }
+
+    /** The caller supplies only the cost details of this line and its accounting cost type. */
+    public static void requireSalesCost(MAcctSchema schema, int productId, int lineId, int costTypeId,
+            Timestamp dateAcct, List<MCostDetail> details) {
+        BigDecimal total = Env.ZERO;
+        for (MCostDetail detail : details)
+            total = total.add(MCostDetail.getTotalCost(detail, schema));
+        if (total.signum() == 0)
+            throw new ZeroSalesCostException(productId, lineId, schema.get_ID(), costTypeId, dateAcct);
+    }
 
 	/**
 	 * Create Cost Detail
@@ -291,6 +323,26 @@ public class CostEngine {
 
 		if (!force)
 			return;
+            if (model instanceof MInOutLine
+                    && MCostType.COSTINGMETHOD_AverageInvoice.equals(costType.getCostingMethod())) {
+                MDocType documentType = MDocType.get(model.getCtx(), model.getC_DocType_ID());
+                if (!MPeriod.isOpen(model.getCtx(), model.getDateAcct(), documentType.getDocBaseType(),
+                        transaction.getAD_Org_ID(), transaction.get_TrxName()))
+                    return; // Historical physical costs in closed periods are immutable.
+            }
+            boolean parallelStandardLandedCost = model instanceof MLandedCostAllocation
+                    && MCostType.COSTINGMETHOD_StandardCosting.equals(costType.getCostingMethod())
+                    && costType.get_ID() != MCostType.get(accountSchema, transaction.getM_Product_ID(),
+                            transaction.getAD_Org_ID()).get_ID();
+            if ((model instanceof MMatchPO || (model instanceof MMatchInv
+                    && MCostType.COSTINGMETHOD_StandardCosting.equals(costType.getCostingMethod()))
+                    || parallelStandardLandedCost) && transaction.getM_InOutLine_ID() > 0) {
+                MInOutLine receipt = (MInOutLine) transaction.getM_InOutLine();
+                MDocType documentType = MDocType.get(receipt.getCtx(), receipt.getC_DocType_ID());
+                if (!MPeriod.isOpen(receipt.getCtx(), receipt.getDateAcct(), documentType.getDocBaseType(),
+                        transaction.getAD_Org_ID(), transaction.get_TrxName()))
+                    return; // A late invoice must not rewrite the original receipt provision.
+            }
 		
 		BigDecimal costThisLevel = Env.ZERO;
 		BigDecimal costLowLevel = Env.ZERO;
@@ -314,7 +366,10 @@ public class CostEngine {
 
 		if (model instanceof MLandedCostAllocation) {
 			MLandedCostAllocation allocation = (MLandedCostAllocation) model;
-			costThisLevel  = allocation.getPriceActual();
+            costThisLevel = MCostType.COSTINGMETHOD_AverageInvoice.equals(costType.getCostingMethod())
+                    ? getLandedCostAmount(accountSchema, allocation).divide(allocation.getQty(),
+                            accountSchema.getCostingPrecision(), RoundingMode.HALF_UP)
+                    : allocation.getPriceActual();
 		}
 
 		MCost cost = MCost.validateCostForCostType(accountSchema, costType, costElement,
@@ -518,6 +573,20 @@ public class CostEngine {
 		return totalCostThisLevel;
 	}
 
+
+    /** Convert the allocation total once, before deriving any per-unit amounts. */
+    public static BigDecimal getLandedCostAmount(MAcctSchema schema, MLandedCostAllocation allocation) {
+        BigDecimal amount = MConversionRate.convert(allocation.getCtx(), allocation.getAmt(),
+                allocation.getC_Currency_ID(), schema.getC_Currency_ID(), allocation.getDateAcct(),
+                allocation.getC_ConversionType_ID(), allocation.getAD_Client_ID(), allocation.getAD_Org_ID());
+        if (amount == null)
+            throw new IllegalStateException("Missing currency conversion for landed cost " + allocation.get_ID());
+        MInvoice invoice = allocation.getInvoice();
+        if (MDocType.DOCBASETYPE_APCreditMemo.equals(invoice.getC_DocType().getDocBaseType()))
+            amount = amount.negate();
+        return amount;
+    }
+
 	//Create cost detail for by document
 	public void createCostDetailForLandedCostAllocation(
 			MLandedCostAllocation allocation) {
@@ -650,6 +719,15 @@ public class CostEngine {
 				
 			}
 
+
+        // Preserve a recorded unit estimate after a zero-quantity, zero-value event.
+        if (lastCostDetail != null && lastCostDetail.getQty().signum() == 0
+                && lastCostDetail.getCumulatedQty().signum() == 0
+                && lastCostDetail.getCumulatedAmt().add(lastCostDetail.getCostAmt())
+                        .add(lastCostDetail.getCostAdjustment()).signum() == 0)
+            costThisLevel = lastCostDetail.getCurrentCostPrice().abs();
+
+
 		return costThisLevel;
 	}
 
@@ -712,6 +790,14 @@ public class CostEngine {
 
 		}
 
+
+        // Preserve a recorded unit estimate after a zero-quantity, zero-value event.
+        if (lastCostDetail != null && lastCostDetail.getQty().signum() == 0
+                && lastCostDetail.getCumulatedQty().signum() == 0
+                && lastCostDetail.getCumulatedAmtLL().add(lastCostDetail.getCostAmtLL())
+                        .add(lastCostDetail.getCostAdjustmentLL()).signum() == 0)
+            costLowLevel = lastCostDetail.getCurrentCostPriceLL().abs();
+
 		return costLowLevel;
 	}
 
@@ -720,63 +806,73 @@ public class CostEngine {
      * @param accountSchema
      * @param transaction
      */
-	public void clearAccounting(MAcctSchema accountSchema , MTransaction transaction) {
+	public void clearAccounting(MAcctSchema accountSchema, MTransaction transaction) {
+        clearAccountingForRecalculation(accountSchema, transaction);
+    }
 
-			if (transaction.getM_InOutLine_ID() > 0) {
-				MInOutLine line = (MInOutLine) transaction.getM_InOutLine();
-				if (!clearAccounting(accountSchema, accountSchema.getM_CostType() , line.getParent() , transaction.getM_Product_ID() , line.getDateAcct()))
-					return;
+    /** Reset accounting and report whether cost recalculation may proceed. */
+	public boolean clearAccountingForRecalculation(MAcctSchema accountSchema , MTransaction transaction) {
 
-				// get Purchase matches
-				List<MMatchPO> orderMatches = MMatchPO.getInOutLine(line);
-				for (MMatchPO match : orderMatches) {
-					if (!clearAccounting(accountSchema, accountSchema.getM_CostType() , match,  transaction.getM_Product_ID() , line.getDateAcct()))
-							return;
-				}
-
-				// get invoice matches
-				List<MMatchInv> invoiceMatches = MMatchInv.getInOutLine(line);
-				for (MMatchInv match : invoiceMatches) {
-					if (!clearAccounting(accountSchema, accountSchema.getM_CostType() , match,  transaction.getM_Product_ID() , line.getDateAcct()))
-						return;
-				}
-
-			}
+            if (transaction.getM_InOutLine_ID() > 0) {
+                MInOutLine line = (MInOutLine) transaction.getM_InOutLine();
+                List<MMatchPO> orderMatches = MMatchPO.getInOutLine(line);
+                List<MMatchInv> invoiceMatches = MMatchInv.getInOutLine(line);
+                // Check every related document before removing any facts. Matches
+                // may belong to a different accounting period from the receipt.
+                if (!canClearAccounting(accountSchema, accountSchema.getM_CostType(), line.getParent(),
+                        transaction.getM_Product_ID(), line.getDateAcct()))
+                    return false;
+                for (MMatchPO match : orderMatches)
+                    if (!canClearAccounting(accountSchema, accountSchema.getM_CostType(), match,
+                            transaction.getM_Product_ID(), match.getDateAcct())) return false;
+                for (MMatchInv match : invoiceMatches)
+                    if (!canClearAccounting(accountSchema, accountSchema.getM_CostType(), match,
+                            transaction.getM_Product_ID(), match.getDateAcct())) return false;
+                clearAccounting(accountSchema, accountSchema.getM_CostType(), line.getParent(),
+                        transaction.getM_Product_ID(), line.getDateAcct());
+                for (MMatchPO match : orderMatches)
+                    clearAccounting(accountSchema, accountSchema.getM_CostType(), match,
+                            transaction.getM_Product_ID(), match.getDateAcct());
+                for (MMatchInv match : invoiceMatches)
+                    clearAccounting(accountSchema, accountSchema.getM_CostType(), match,
+                            transaction.getM_Product_ID(), match.getDateAcct());
+            }
 			else if (transaction.getC_ProjectIssue_ID() > 0) {
 				MProjectIssue line = (MProjectIssue) transaction.getC_ProjectIssue();
 				if (!clearAccounting(accountSchema, accountSchema.getM_CostType() , line,  transaction.getM_Product_ID() , line.getMovementDate()))
-					return;
+					return false;
 			}
 
 			else if (transaction.getM_InventoryLine_ID() > 0) {
 				MInventoryLine line = (MInventoryLine) transaction.getM_InventoryLine();
 				if (!clearAccounting(accountSchema, accountSchema.getM_CostType() , line.getParent(),  transaction.getM_Product_ID() , line.getDateAcct()))
-					return;
+					return false;
 			}
 			else if (transaction.getM_MovementLine_ID() > 0) {
 				MMovementLine line = (MMovementLine) transaction.getM_MovementLine();
 				if (!clearAccounting(accountSchema, accountSchema.getM_CostType() , line.getParent(),  transaction.getM_Product_ID() , line.getDateAcct()))
-					return;
+					return false;
 			}
 			
 			else if (transaction.getM_ProductionLine_ID() > 0) {
 				MProductionLine line = (MProductionLine) transaction.getM_ProductionLine();
 				MProduction production = (MProduction) line.getM_ProductionPlan().getM_Production();
 				if (!clearAccounting(accountSchema, accountSchema.getM_CostType() , production,  transaction.getM_Product_ID()  , production.getMovementDate()))
-					return;
+					return false;
 
 			}
 			else if (transaction.getPP_Cost_Collector_ID() > 0)
 			{
 				X_PP_Cost_Collector costCollector = (X_PP_Cost_Collector) transaction.getPP_Cost_Collector();
-				if(!clearAccounting(accountSchema, accountSchema.getM_CostType() , costCollector , costCollector.getM_Product_ID() , costCollector.getDateAcct()));
-				return;
+				return clearAccounting(accountSchema, accountSchema.getM_CostType(), costCollector, costCollector.getM_Product_ID(), costCollector.getDateAcct());
 			}
 			else
 			{
 				log.info("Document does not exist :" + transaction);
+                return false;
 			}	
 
+        return true;
 	}
 
     /**
@@ -788,7 +884,7 @@ public class CostEngine {
      * @param dateAcct
      * @return true clean
      */
-	public boolean clearAccounting(MAcctSchema accountSchema, I_M_CostType costType, PO model, int productId , Timestamp dateAcct) {
+	private boolean canClearAccounting(MAcctSchema accountSchema, I_M_CostType costType, PO model, int productId , Timestamp dateAcct) {
 		// check if costing type need reset accounting 
 		if (!accountSchema.getCostingMethod().equals(costType.getCostingMethod())) {
 			MProduct product = MProduct.get(accountSchema.getCtx() , productId);
@@ -817,11 +913,17 @@ public class CostEngine {
 			return false;
 		}	
 
+        return true;
+    }
+
+	public boolean clearAccounting(MAcctSchema accountSchema, I_M_CostType costType, PO model, int productId, Timestamp dateAcct) {
+        if (!canClearAccounting(accountSchema, costType, model, productId, dateAcct))
+            return false;
 		final String sqlUpdate = "UPDATE " + model.get_TableName() + " SET Posted = 'N' WHERE "+ model.get_TableName() + "_ID=?";
-		DB.executeUpdate(sqlUpdate, new Object[] {model.get_ID()}, false , model.get_TrxName());
+		DB.executeUpdateEx(sqlUpdate, new Object[] {model.get_ID()}, model.get_TrxName());
 		//Delete account
 		final String sqldelete = "DELETE FROM Fact_Acct WHERE Record_ID =? AND AD_Table_ID=?";		
-		DB.executeUpdate (sqldelete ,new Object[] { model.get_ID(), model.get_Table_ID() }, false , model.get_TrxName());
+		DB.executeUpdateEx(sqldelete, new Object[] {model.get_ID(), model.get_Table_ID()}, model.get_TrxName());
 		return true;
 	}
 }

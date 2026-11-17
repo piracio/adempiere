@@ -23,6 +23,9 @@
   <property name="test.build.dir"
             value="build/test"/>
 
+  <!-- Runtime requires an explicit database identity; no default allowlist. -->
+  <property name="costtest.case" value="TEST03"/>
+
   <property file="build-local.properties"/> 
   
   <property file="build.properties"/>
@@ -154,16 +157,28 @@
 
   <target name="compile-negative-inventory-test"
       description="compile negative inventory costing test">
-
+    <mkdir dir="${build}"/>
     <javac debug="false"
            includeantruntime="false"
            destdir="${build}">
 
       <src path="${src}"/>
       <src path="${adempiere.trunk}/base/src"/>
+      <src path="${adempiere.trunk}/org.eevolution.manufacturing/src/main/java/base"/>
       <src path="${adempiere.trunk}/org.adempiere.test/src/test/java"/>
 
       <include name="test/java/org/adempiere/NegativeInventoryCostAdjustmentTest.java"/>
+      <include name="test/java/org/adempiere/NegativeInventoryDatabaseIdentityTest.java"/>
+      <include name="org/adempiere/engine/AverageInvoiceCostingMethod.java"/>
+      <include name="org/adempiere/engine/AbstractCostingMethod.java"/>
+      <include name="org/adempiere/engine/CostEngine.java"/>
+      <include name="org/compiere/model/MCostDetail.java"/>
+      <include name="org/compiere/acct/Doc_MatchInv.java"/>
+      <include name="org/compiere/acct/Doc_InOut.java"/>
+      <include name="org/compiere/acct/Doc_Invoice.java"/>
+      <include name="org/compiere/model/MInOut.java"/>
+      <include name="org/adempiere/exceptions/ZeroSalesCostException.java"/>
+      <include name="org/eevolution/manufacturing/process/GenerateCostDetail.java"/>
 
       <compilerarg value="-implicit:class"/>
 
@@ -175,13 +190,39 @@
   <target name="run-negative-inventory-test"
       depends="compile-negative-inventory-test"
       description="run negative inventory costing test scaffold">
+    <fail unless="costtest.properties"
+          message="Set -Dcosttest.properties to the properties file for the dedicated seed clone."/>
     <java classname="org.adempiere.NegativeInventoryCostAdjustmentTest"
         fork="true"
         failonerror="true">
-      <classpath>
-        <pathelement location="${build}"/>
-        <path refid="lib.class.path"/>
-      </classpath>
+      <sysproperty key="PropertyFile" value="${costtest.properties}"/>
+      <syspropertyset>
+        <propertyref prefix="adempiere.costtest.database."/>
+      </syspropertyset>
+      <arg value="${costtest.case}"/>
+      <classpath refid="integration.test.classpath"/>
+    </java>
+  </target>
+
+  <target name="test-negative-inventory-identity" depends="compile-negative-inventory-test"
+          description="run database identity validation without starting ADempiere">
+    <java classname="org.junit.platform.console.ConsoleLauncher" fork="true" failonerror="true">
+      <classpath refid="integration.test.classpath"/>
+      <arg value="--select-class=org.adempiere.NegativeInventoryDatabaseIdentityTest"/>
+      <arg value="--details=summary"/>
+    </java>
+  </target>
+
+  <target name="test-negative-inventory-integration" depends="compile-negative-inventory-test"
+          description="run the rollback-verified costing regressions on an explicitly configured seed clone">
+    <fail unless="costtest.properties"
+          message="Set -Dcosttest.properties to the properties file for the dedicated seed clone."/>
+    <java classname="org.junit.platform.console.ConsoleLauncher" fork="true" failonerror="true">
+      <classpath refid="integration.test.classpath"/>
+      <sysproperty key="PropertyFile" value="${costtest.properties}"/>
+      <syspropertyset><propertyref prefix="adempiere.costtest.database."/></syspropertyset>
+      <arg value="--select-class=org.adempiere.NegativeInventoryCostAdjustmentTest"/>
+      <arg value="--details=summary"/>
     </java>
   </target>
 
