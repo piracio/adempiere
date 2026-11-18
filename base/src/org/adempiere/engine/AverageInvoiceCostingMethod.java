@@ -6,6 +6,8 @@ package org.adempiere.engine;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Properties;
 
 import org.compiere.model.MAcctSchema;
@@ -23,6 +25,7 @@ import org.compiere.model.MMovementLine;
 import org.compiere.model.MPeriod;
 import org.compiere.model.MPeriodControl;
 import org.compiere.model.MProduct;
+import org.compiere.model.MRMALine;
 import org.compiere.model.MTransaction;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -336,6 +339,14 @@ public class AverageInvoiceCostingMethod extends AbstractCostingMethod
 			if (model instanceof MMovementLine && costDetail!=null){
 				costDetail.setAmt(amount);
 			}
+            if (costDetail != null && model instanceof MInOutLine
+                    && MTransaction.MOVEMENTTYPE_CustomerReturns.equals(transaction.getMovementType())) {
+                // Posting must use the recomputed amount of an open return.
+                costDetail.setCostAdjustment(adjustCost);
+                costDetail.setCostAdjustmentLL(adjustCostLowerLevel);
+                costDetail.setAmt(amount.add(adjustCost));
+                costDetail.setAmtLL(amountLowerLevel.add(adjustCostLowerLevel));
+            }
 		}
 		else if (transaction.getMovementType().endsWith("-")) {
 			// Use the last current cost price for out transaction			
@@ -556,20 +567,62 @@ public class AverageInvoiceCostingMethod extends AbstractCostingMethod
         BigDecimal opening = MCostDetail.getQtyOnHandByASIAndSeqNo(dimension, sourceAsi,
                 source.getSeqNo() - 1, costingLevel, allocation.get_TrxName());
         BigDecimal affected = source.getQty().add(opening.min(Env.ZERO)).max(Env.ZERO);
-        // Track this receipt's retained share, even when a later receipt reuses
-        // its ASI. New receipts increase the pool, never this contribution.
+        // New receipts do not restore this contribution. A customer return
+        // restores only the original share consumed by its identified shipment.
+        Map<Integer, BigDecimal> shippedQuantity = new HashMap<>();
+        Map<Integer, BigDecimal> shippedContribution = new HashMap<>();
+        Map<Integer, BigDecimal> returnedQuantity = new HashMap<>();
+        Map<Integer, Integer> returnShipments = new HashMap<>();
+        Map<Integer, BigDecimal> returnQuantities = new HashMap<>();
+        Map<Integer, BigDecimal> returnContributions = new HashMap<>();
         for (MCostDetail later : MCostDetail.getAfterDate(source, costingLevel)) {
             if (later.getSeqNo() > lastCostDetail.getSeqNo()
-                    || later.getM_AttributeSetInstance_ID() != sourceAsi || later.getQty().signum() >= 0)
+                    || later.getM_AttributeSetInstance_ID() != sourceAsi || later.getQty().signum() == 0)
                 continue;
             MTransaction laterTransaction = new MTransaction(later.getCtx(), later.getM_Transaction_ID(), later.get_TrxName());
             if (laterTransaction.getM_MovementLine_ID() > 0
                     && MAcctSchema.COSTINGLEVEL_Client.equals(costingLevel)) continue;
+            if (later.getQty().signum() > 0) {
+                if (MTransaction.MOVEMENTTYPE_CustomerReturns.equals(laterTransaction.getMovementType())) {
+                    int shipmentId = landedCostReturnSource(laterTransaction, shippedQuantity);
+                    BigDecimal quantity = shippedQuantity.get(shipmentId);
+                    BigDecimal returned = returnedQuantity.getOrDefault(shipmentId, Env.ZERO).add(later.getQty());
+                    if (returned.compareTo(quantity) > 0)
+                        throw new IllegalStateException("Landed-cost return exceeds its identified shipment quantity");
+                    BigDecimal restored = shippedContribution.get(shipmentId).multiply(later.getQty())
+                            .divide(quantity, accountSchema.getCostingPrecision() + 12, RoundingMode.HALF_UP);
+                    affected = affected.add(restored);
+                    returnedQuantity.put(shipmentId, returned);
+                    int returnId = laterTransaction.getM_InOutLine_ID();
+                    returnShipments.put(returnId, shipmentId);
+                    returnQuantities.merge(returnId, later.getQty(), BigDecimal::add);
+                    returnContributions.merge(returnId, restored, BigDecimal::add);
+                }
+                continue;
+            }
+            if (MTransaction.MOVEMENTTYPE_CustomerReturns.equals(laterTransaction.getMovementType())) {
+                MInOutLine reversed = new MInOutLine(later.getCtx(), laterTransaction.getM_InOutLine_ID(), later.get_TrxName());
+                int returnId = reversed.getReversalLine_ID();
+                if (!returnShipments.containsKey(returnId))
+                    throw new IllegalStateException("Landed-cost return reversal requires its traced return");
+                int shipmentId = returnShipments.get(returnId);
+                BigDecimal reversedQuantity = later.getQty().negate();
+                affected = affected.subtract(returnContributions.get(returnId).multiply(reversedQuantity)
+                        .divide(returnQuantities.get(returnId), accountSchema.getCostingPrecision() + 12, RoundingMode.HALF_UP));
+                returnedQuantity.put(shipmentId, returnedQuantity.get(shipmentId).subtract(reversedQuantity));
+                continue;
+            }
             opening = MCostDetail.getQtyOnHandByASIAndSeqNo(dimension, sourceAsi,
                     later.getSeqNo() - 1, costingLevel, allocation.get_TrxName());
+            BigDecimal beforeIssue = affected;
             affected = opening.signum() <= 0 ? Env.ZERO : affected
                     .multiply(opening.add(later.getQty()).max(Env.ZERO))
                     .divide(opening, accountSchema.getCostingPrecision() + 12, RoundingMode.HALF_UP);
+            if (MTransaction.MOVEMENTTYPE_CustomerShipment.equals(laterTransaction.getMovementType())) {
+                int shipmentId = laterTransaction.getM_InOutLine_ID();
+                shippedQuantity.merge(shipmentId, later.getQty().negate(), BigDecimal::add);
+                shippedContribution.merge(shipmentId, beforeIssue.subtract(affected), BigDecimal::add);
+            }
         }
         affected = affected.max(Env.ZERO).min(receiptQty).min(onHand.max(Env.ZERO));
         adjustCost = CostEngine.getLandedCostAmount(accountSchema, allocation).multiply(affected)
@@ -595,6 +648,29 @@ public class AverageInvoiceCostingMethod extends AbstractCostingMethod
             costDetail.setAmtLL(Env.ZERO);
             updateAmountCost();
         }
+    }
+
+    /** Resolve a physical customer return without guessing between shipments. */
+    private int landedCostReturnSource(MTransaction returned, Map<Integer, BigDecimal> shippedQuantity) {
+        MInOutLine line = new MInOutLine(returned.getCtx(), returned.getM_InOutLine_ID(), returned.get_TrxName());
+        if (line.getM_RMALine_ID() > 0) {
+            int sourceId = new MRMALine(line.getCtx(), line.getM_RMALine_ID(), line.get_TrxName()).getM_InOutLine_ID();
+            if (shippedQuantity.containsKey(sourceId)) return sourceId;
+            throw new IllegalStateException("Landed-cost return has no traced RMA shipment");
+        }
+        int sourceId = 0;
+        if (line.getC_OrderLine_ID() > 0) {
+            for (int shipmentId : shippedQuantity.keySet()) {
+                MInOutLine shipment = new MInOutLine(line.getCtx(), shipmentId, line.get_TrxName());
+                if (shipment.getC_OrderLine_ID() != line.getC_OrderLine_ID()) continue;
+                if (sourceId != 0)
+                    throw new IllegalStateException("Ambiguous landed-cost return requires an RMA shipment link");
+                sourceId = shipmentId;
+            }
+        }
+        if (sourceId == 0)
+            throw new IllegalStateException("Landed-cost return requires an identified traced shipment");
+        return sourceId;
     }
 
 	public MCostDetail process() {		

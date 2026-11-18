@@ -291,6 +291,743 @@ public class NegativeInventoryCostAdjustmentTest implements IntegrationTestTag {
         }
     }
 
+    // Return, credit and late-freight regression cases.
+    private static MInvoice returnInvoice(Fixture f, boolean customer, boolean credit,
+            MInOutLine physical, String quantity, String price, Timestamp day) {
+        String base = customer ? (credit ? MDocType.DOCBASETYPE_ARCreditMemo : MDocType.DOCBASETYPE_ARInvoice)
+                : (credit ? MDocType.DOCBASETYPE_APCreditMemo : MDocType.DOCBASETYPE_APInvoice);
+        MDocType type=f.documentType(base,customer);
+        MPriceList prices=customer ? new Query(f.ctx,MPriceList.Table_Name,
+                "AD_Client_ID=? AND IsSOPriceList='Y' AND C_Currency_ID=?",f.name)
+                .setParameters(CLIENT_ID,CommonGWData.USD_CURRENCY_ID).setOnlyActiveRecords(true).first() : f.purchasePriceList;
+        assertNotNull(prices);
+        MInvoice document=new MInvoice(f.ctx,0,f.name);
+        document.setAD_Org_ID(ORG_ID);document.setDocumentNo(f.owner.substring(0,20)+"-C"+ ++f.documentSequence);
+        document.setDescription(f.owner);document.setIsSOTrx(customer);document.setC_DocTypeTarget_ID(type.get_ID());
+        document.setC_BPartner_ID(f.partnerId);document.setC_BPartner_Location_ID(f.partnerLocation.get_ID());
+        document.setM_PriceList_ID(prices.get_ID());document.setDateAcct(day);document.setDateInvoiced(day);document.saveEx();
+        MInvoiceLine line=new MInvoiceLine(document);
+        line.setShipLine(new MInOutLine(f.ctx,physical.get_ID(),f.name));
+        line.setQty(new BigDecimal(quantity));line.setPrice(new BigDecimal(price));line.setDescription(f.owner);line.saveEx();
+        assertTrue(document.processIt(DocAction.ACTION_Complete),document.getProcessMsg());document.saveEx();
+        return document;
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true,4", "true,10", "false,4", "false,20"})
+    public void testE09_CreditMemoForReturnsDoesNotMoveStockAgain(boolean customer,String returned) {
+        try(Fixture f=new Fixture("E09")) {
+            Timestamp january=returnDay("-01-01"),february=returnDay("-02-01");
+            f.assertDocumentPreconditions(january);f.assertDocumentPreconditions(february);f.createProduct();f.useExistingPartner();
+            MInOutLine receipt=f.movement(false,"20","30",january),source=receipt;
+            f.post(MInOut.Table_ID,receipt.getM_InOut_ID());
+            if(customer){source=f.movement(true,"10","50",returnDay("-01-02"));f.post(MInOut.Table_ID,source.getM_InOut_ID());}
+            MInvoice original=returnInvoice(f,customer,false,source,customer ? "10" : "20",customer ? "50" : "30",returnDay("-01-03"));
+            f.post(MInvoice.Table_ID,original.get_ID());
+            List<List<String>> history=f.historicalRows("M_CostDetail",february),facts=f.historicalRows("Fact_Acct",february);
+            f.closePeriod(january);
+            MInOutLine line=physicalReturn(f,customer,source,receiptAsi(f,receipt),returned,february);
+            completeReturn(f,line);f.post(MInOut.Table_ID,line.getM_InOut_ID());
+            List<List<String>> storage=f.snapshotUnchecked("M_Storage");
+            MCost costBefore=f.costQuery().firstOnly();
+            String costQuantity=costBefore.getCurrentQty().toPlainString(),costValue=costBefore.getCumulatedAmt().toPlainString(),unitCost=costBefore.getCurrentCostPrice().toPlainString();
+            int movements=f.count("M_Transaction");
+            MInvoice credit=returnInvoice(f,customer,true,line,returned,customer ? "50" : "30",returnDay("-02-02"));
+            f.post(MInvoice.Table_ID,credit.get_ID());
+            String acct=customer ? "C_Receivable_Acct" : "V_Liability_Acct";
+            String bpTable=customer ? "C_BP_Customer_Acct" : "C_BP_Vendor_Acct";
+            BigDecimal accountAmount=DB.getSQLValueBDEx(f.name,"SELECT COALESCE(SUM(AmtAcctDr-AmtAcctCr),0) FROM Fact_Acct"
+                    +" WHERE AD_Table_ID=? AND Record_ID=? AND C_AcctSchema_ID=? AND Account_ID=(SELECT vc.Account_ID"
+                    +" FROM C_ValidCombination vc JOIN "+bpTable+" bp ON bp."+acct+"=vc.C_ValidCombination_ID"
+                    +" WHERE bp.C_BPartner_ID=? AND bp.C_AcctSchema_ID=?)",
+                    MInvoice.Table_ID,credit.get_ID(),SCHEMA_ID,f.partnerId,SCHEMA_ID);
+            BigDecimal expected=customer ? credit.getGrandTotal().negate() : credit.getGrandTotal();
+            assertDecimal(expected.toPlainString(),accountAmount,"Credit memo reverses the correct receivable/payable sign");
+            assertEquals(movements,f.count("M_Transaction"));assertEquals(storage,f.snapshotUnchecked("M_Storage"));
+            // A price-match implementation may legitimately append a zero-quantity
+            // event. Require unchanged financial state, not unchanged audit rows.
+            assertPhysicalAndCost(f,costQuantity,costValue);
+            assertDecimal(unitCost,((MCost)f.costQuery().firstOnly()).getCurrentCostPrice(),"Credit memo alone does not revalue returned stock at the same price");
+            f.assertHistoricalUnchanged("M_CostDetail",history,february);f.assertHistoricalUnchanged("Fact_Acct",facts,february);
+        }
+    }
+
+    private static Timestamp returnDay(String suffix) {
+        return Timestamp.valueOf(TEST_YEAR + suffix + " 00:00:00");
+    }
+
+    private static MInOutLine physicalReturn(Fixture f, boolean customer, MInOutLine source,
+            int asi, String quantity, Timestamp day) {
+        String base = customer ? MDocType.DOCBASETYPE_MaterialReceipt : MDocType.DOCBASETYPE_MaterialDelivery;
+        MDocType type = f.documentType(base, customer);
+        MInOut sourceHeader = new MInOut(f.ctx, source.getM_InOut_ID(), f.name);
+        MInOut document = new MInOut(f.ctx, 0, f.name);
+        document.setAD_Org_ID(ORG_ID);
+        document.setDocumentNo(f.owner.substring(0, 20) + "-R" + ++f.documentSequence);
+        document.setDescription(f.owner);
+        document.setIsSOTrx(customer);
+        document.setC_DocType_ID(type.get_ID());
+        document.setMovementType(customer ? MTransaction.MOVEMENTTYPE_CustomerReturns : MTransaction.MOVEMENTTYPE_VendorReturns);
+        document.setMovementDate(day);
+        document.setDateAcct(day);
+        document.setM_Warehouse_ID(WAREHOUSE_ID);
+        document.setC_BPartner_ID(sourceHeader.getC_BPartner_ID());
+        document.setC_BPartner_Location_ID(sourceHeader.getC_BPartner_Location_ID());
+        document.setC_Order_ID(sourceHeader.getC_Order_ID());
+        document.saveEx();
+        MInOutLine line = new MInOutLine(document);
+        line.setC_OrderLine_ID(source.getC_OrderLine_ID());
+        line.setM_Product_ID(f.productId);
+        line.setC_UOM_ID(f.product.getC_UOM_ID());
+        line.setM_Locator_ID(LOCATOR_ID);
+        line.setM_AttributeSetInstance_ID(asi);
+        line.setMovementQty(new BigDecimal(quantity));
+        line.setDescription(f.owner);
+        line.saveEx();
+        return line;
+    }
+
+    private static void completeReturn(Fixture f, MInOutLine line) {
+        MInOut document = line.getParent();
+        assertTrue(document.processIt(DocAction.ACTION_Complete), document.getProcessMsg());
+        document.saveEx();
+        if (DocAction.STATUS_InProgress.equals(document.getDocStatus())) {
+            for (MInOutConfirm confirmation : document.getConfirmations(true)) {
+                if (confirmation.isProcessed()) continue;
+                for (MInOutLineConfirm confirmedLine : confirmation.getLines(true)) {
+                    confirmedLine.setConfirmedQty(confirmedLine.getTargetQty());
+                    confirmedLine.setScrappedQty(Env.ZERO);
+                    confirmedLine.saveEx();
+                }
+                assertTrue(confirmation.processIt(DocAction.ACTION_Complete), confirmation.getProcessMsg());
+                confirmation.saveEx();
+            }
+            document = new MInOut(f.ctx, document.get_ID(), f.name);
+            assertTrue(document.processIt(DocAction.ACTION_Complete), document.getProcessMsg());
+            document.saveEx();
+        }
+        assertEquals(DocAction.STATUS_Completed, new MInOut(f.ctx, document.get_ID(), f.name).getDocStatus());
+        assertTrue(new Query(f.ctx, MTransaction.Table_Name, "M_InOutLine_ID=? AND MovementType=?", f.name)
+                .setParameters(line.get_ID(), document.getMovementType()).count() > 0,
+                "A return must create a real material transaction");
+    }
+
+    private static int receiptAsi(Fixture f, MInOutLine receipt) {
+        return new MInOutLine(f.ctx, receipt.get_ID(), f.name).getM_AttributeSetInstance_ID();
+    }
+
+    private static void assertPhysicalAndCost(Fixture f, String quantity, String value) {
+        assertAll("Physical stock and cost must reconcile",
+                () -> assertDecimal(quantity, DB.getSQLValueBDEx(f.name,
+                        "SELECT COALESCE(SUM(QtyOnHand),0) FROM M_Storage WHERE M_Product_ID=?", f.productId), "Storage quantity"),
+                () -> assertDecimal(quantity, DB.getSQLValueBDEx(f.name,
+                        "SELECT COALESCE(SUM(MovementQty),0) FROM M_Transaction WHERE M_Product_ID=?", f.productId), "Movement quantity"),
+                () -> assertDecimal(quantity, ((MCost) f.costQuery().firstOnly()).getCurrentQty(), "Cost quantity"),
+                () -> assertDecimal(value, ((MCost) f.costQuery().firstOnly()).getCumulatedAmt(), "Inventory value"));
+    }
+
+    private static void observeReturn(Fixture f, String tag) {
+        MCost cost = f.costQuery().firstOnly();
+        System.out.println("RETURN_STATE=" + tag + "|qty=" + cost.getCurrentQty()
+                + "|value=" + cost.getCumulatedAmt() + "|price=" + cost.getCurrentCostPrice()
+                + "|asset=" + f.accountBalance("P_Asset_Acct"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true,4,false", "true,10,false", "false,4,false", "false,20,false",
+            "true,4,true", "true,10,true", "false,4,true", "false,20,true"})
+    public void testE01_PhysicalReturnsAndPosting(boolean customer, String returned, boolean closeSource) {
+        try (Fixture f = new Fixture("E01")) {
+            Timestamp january = returnDay("-01-01"), february = returnDay("-02-01");
+            f.assertDocumentPreconditions(january); f.assertDocumentPreconditions(february);
+            f.createProduct(); f.useExistingPartner();
+            MInOutLine receipt = f.movement(false, "20", "30", january);
+            f.post(MInOut.Table_ID, receipt.getM_InOut_ID());
+            MInOutLine source = receipt;
+            if (customer) {
+                source = f.movement(true, "10", "50", returnDay("-01-02"));
+                f.post(MInOut.Table_ID, source.getM_InOut_ID());
+            }
+            List<List<String>> history = f.historicalRows("M_CostDetail", february);
+            List<List<String>> facts = f.historicalRows("Fact_Acct", february);
+            if (closeSource) f.closePeriod(january);
+            MInOutLine returnedLine = physicalReturn(f, customer, source, receiptAsi(f, receipt), returned,
+                    closeSource ? february : returnDay("-01-03"));
+            completeReturn(f, returnedLine);
+            f.post(MInOut.Table_ID, returnedLine.getM_InOut_ID());
+            BigDecimal qty = customer ? new BigDecimal("10").add(new BigDecimal(returned))
+                    : new BigDecimal("20").subtract(new BigDecimal(returned));
+            String value = qty.multiply(new BigDecimal("30")).toPlainString();
+            observeReturn(f, "E01:" + customer + ":" + returned + ":" + closeSource);
+            assertAll(() -> assertPhysicalAndCost(f, qty.toPlainString(), value),
+                    () -> assertDecimal(value, f.accountBalance("P_Asset_Acct"), "Posted inventory"));
+            if (closeSource) {
+                f.assertHistoricalUnchanged("M_CostDetail", history, february);
+                f.assertHistoricalUnchanged("Fact_Acct", facts, february);
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true,4", "true,10", "false,4", "false,20"})
+    public void testE02_ReturnReversalRestoresBalances(boolean customer, String returned) {
+        try (Fixture f = new Fixture("E02")) {
+            Timestamp january = returnDay("-01-01"), february = returnDay("-02-01");
+            f.assertDocumentPreconditions(january); f.assertDocumentPreconditions(february);
+            f.createProduct(); f.useExistingPartner();
+            MInOutLine receipt = f.movement(false, "20", "30", january);
+            f.post(MInOut.Table_ID, receipt.getM_InOut_ID());
+            MInOutLine source = receipt;
+            if (customer) {
+                source = f.movement(true, "10", "50", returnDay("-01-02"));
+                f.post(MInOut.Table_ID, source.getM_InOut_ID());
+            }
+            List<List<String>> history = f.historicalRows("M_CostDetail", february);
+            List<List<String>> facts = f.historicalRows("Fact_Acct", february);
+            f.closePeriod(january);
+            MInOutLine line = physicalReturn(f, customer, source, receiptAsi(f, receipt), returned, february);
+            completeReturn(f, line); f.post(MInOut.Table_ID, line.getM_InOut_ID());
+            MInOut document = new MInOut(f.ctx, line.getM_InOut_ID(), f.name);
+            assertTrue(document.reverseCorrectIt(), document.getProcessMsg()); document.saveEx();
+            f.post(MInOut.Table_ID, document.getReversal_ID());
+            observeReturn(f, "E02:" + customer + ":" + returned);
+            String quantity = customer ? "10" : "20", value = customer ? "300" : "600";
+            assertAll(() -> assertPhysicalAndCost(f, quantity, value),
+                    () -> assertDecimal(value, f.accountBalance("P_Asset_Acct"), "Return reversal restores ledger"),
+                    () -> f.assertHistoricalUnchanged("M_CostDetail", history, february),
+                    () -> f.assertHistoricalUnchanged("Fact_Acct", facts, february));
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true", "false"})
+    public void testE03_TwoPartialReturnsThenReverseTheFirst(boolean customer) {
+        try (Fixture f = new Fixture("E03")) {
+            Timestamp january = returnDay("-01-01"), february = returnDay("-02-01");
+            f.assertDocumentPreconditions(january); f.assertDocumentPreconditions(february);
+            f.createProduct(); f.useExistingPartner();
+            MInOutLine receipt = f.movement(false, "20", "30", january);
+            f.post(MInOut.Table_ID, receipt.getM_InOut_ID());
+            MInOutLine source = receipt;
+            if (customer) { source=f.movement(true,"10","50",returnDay("-01-02")); f.post(MInOut.Table_ID,source.getM_InOut_ID()); }
+            List<List<String>> history=f.historicalRows("M_CostDetail",february), facts=f.historicalRows("Fact_Acct",february);
+            f.closePeriod(january);
+            MInOutLine first=physicalReturn(f,customer,source,receiptAsi(f,receipt),"4",february);
+            completeReturn(f,first); f.post(MInOut.Table_ID,first.getM_InOut_ID());
+            MInOutLine second=physicalReturn(f,customer,source,receiptAsi(f,receipt),"6",returnDay("-02-02"));
+            completeReturn(f,second); f.post(MInOut.Table_ID,second.getM_InOut_ID());
+            assertPhysicalAndCost(f,customer ? "20" : "10", customer ? "600" : "300");
+            MInOut document=new MInOut(f.ctx,first.getM_InOut_ID(),f.name);
+            assertTrue(document.reverseCorrectIt(),document.getProcessMsg()); document.saveEx();
+            f.post(MInOut.Table_ID,document.getReversal_ID());
+            System.out.println("RETURN_REPOST_REQUIRED=E03:"+customer+"|secondPosted="
+                    +new MInOut(f.ctx,second.getM_InOut_ID(),f.name).isPosted()
+                    +"|assetBeforeRepost="+f.accountBalance("P_Asset_Acct"));
+            // Open successors can be marked for reposting by the costing engine.
+            // Finish that accounting step before comparing the final ledger.
+            f.post(MInOut.Table_ID,second.getM_InOut_ID());
+            int factsAfterRepost=f.count("Fact_Acct");
+            f.post(MInOut.Table_ID,second.getM_InOut_ID());
+            assertEquals(factsAfterRepost,f.count("Fact_Acct"),"Reposting must not duplicate facts");
+            observeReturn(f,"E03:"+customer);
+            assertAll(() -> assertPhysicalAndCost(f,customer ? "16" : "14", customer ? "480" : "420"),
+                    () -> assertDecimal(customer ? "480" : "420",f.accountBalance("P_Asset_Acct"),"Only the first partial return is reversed"),
+                    () -> f.assertHistoricalUnchanged("M_CostDetail",history,february),
+                    () -> f.assertHistoricalUnchanged("Fact_Acct",facts,february));
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true", "false"})
+    public void testE04_ReturnCannotCompleteInClosedPeriod(boolean customer) {
+        try(Fixture f=new Fixture("E04")) {
+            Timestamp january=returnDay("-01-01"); f.assertDocumentPreconditions(january);
+            f.createProduct();f.useExistingPartner();
+            MInOutLine receipt=f.movement(false,"20","30",january), source=receipt;
+            if(customer)source=f.movement(true,"10","50",returnDay("-01-02"));
+            List<List<String>> costs=f.snapshotUnchecked("M_Cost"), details=f.snapshotUnchecked("M_CostDetail");
+            f.closePeriod(january);
+            MInOutLine line=physicalReturn(f,customer,source,receiptAsi(f,receipt),"4",returnDay("-01-03"));
+            MInOut document=line.getParent();
+            assertFalse(document.processIt(DocAction.ACTION_Complete),"Closed-period return must be rejected");
+            assertTrue(document.getProcessMsg().contains("PeriodClosed"),document.getProcessMsg());
+            assertEquals(0,new Query(f.ctx,MTransaction.Table_Name,"M_InOutLine_ID=?",f.name).setParameters(line.get_ID()).count());
+            assertEquals(costs,f.snapshotUnchecked("M_Cost"));assertEquals(details,f.snapshotUnchecked("M_CostDetail"));
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true,4", "true,10", "false,4", "false,20"})
+    public void testE05_ReplayMustPreserveClosedReturns(boolean customer,String returned) {
+        try(Fixture f=new Fixture("E05")) {
+            Timestamp january=returnDay("-01-01"),february=returnDay("-02-01"),march=returnDay("-03-01");
+            f.assertDocumentPreconditions(january);f.assertDocumentPreconditions(february);
+            f.createProduct();f.useExistingPartner();
+            MInOutLine receipt=f.movement(false,"20","30",january),source=receipt;
+            if(customer)source=f.movement(true,"10","50",returnDay("-01-02"));
+            MInOutLine line=physicalReturn(f,customer,source,receiptAsi(f,receipt),returned,february);completeReturn(f,line);
+            f.post(MInOut.Table_ID,line.getM_InOut_ID()); f.closePeriod(february);
+            List<List<String>> before=f.historicalRows("M_CostDetail",march);before.removeAll(f.historicalRows("M_CostDetail",february));
+            List<List<String>> facts=f.historicalRows("Fact_Acct",march);
+            MTransaction original=new Query(f.ctx,MTransaction.Table_Name,"M_InOutLine_ID=?",f.name).setParameters(receipt.get_ID()).firstOnly();
+            RuntimeException rejection=null;
+            try {CostEngineFactory.getCostEngine(CLIENT_ID).createCostDetail(f.schema,(MCostType)f.schema.getM_CostType(),f.material,original,receipt,true);}
+            catch(RuntimeException e){rejection=e;}
+            List<List<String>> after=f.historicalRows("M_CostDetail",march);after.removeAll(f.historicalRows("M_CostDetail",february));
+            final boolean rejected=rejection!=null;
+            System.out.println("RETURN_REPLAY="+customer+":"+returned+"|rejected="+rejected+"|closedUnchanged="+before.equals(after));
+            assertAll(() -> assertTrue(rejected,"Closed-return successors must reject the whole replay"),
+                    () -> assertEquals(before,after,"Closed-return details changed"),
+                    () -> assertEquals(facts,f.historicalRows("Fact_Acct",march),"Closed-return facts changed"));
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true,true", "true,false", "false,true", "false,false"})
+    public void testE06_LateFreightAndPartialReturnsPreserveClosedSource(boolean customer,boolean returnFirst) {
+        try(Fixture f=new Fixture("E06")) {
+            Timestamp january=returnDay("-01-01"),february=returnDay("-02-01");
+            f.assertDocumentPreconditions(january);f.assertDocumentPreconditions(february);
+            f.createProduct();f.useExistingPartner();
+            MInOutLine receipt=f.movement(false,"20","30",january),source=receipt;
+            f.post(MInOut.Table_ID,receipt.getM_InOut_ID());
+            if(customer){source=f.movement(true,"10","50",returnDay("-01-02"));f.post(MInOut.Table_ID,source.getM_InOut_ID());}
+            List<List<String>> history=f.historicalRows("M_CostDetail",february),facts=f.historicalRows("Fact_Acct",february);
+            f.closePeriod(january);
+            if(returnFirst){MInOutLine line=physicalReturn(f,customer,source,receiptAsi(f,receipt),"4",february);completeReturn(f,line);f.post(MInOut.Table_ID,line.getM_InOut_ID());}
+            MInvoice freight=f.realLandedCostInvoice(receipt,"200",returnFirst ? returnDay("-02-02") : february);
+            f.post(MInvoice.Table_ID,freight.get_ID());
+            if(!returnFirst){MInOutLine line=physicalReturn(f,customer,source,receiptAsi(f,receipt),"4",returnDay("-02-02"));completeReturn(f,line);f.post(MInOut.Table_ID,line.getM_InOut_ID());}
+            observeReturn(f,"E06:"+customer+":"+returnFirst);
+            assertAll(() -> assertPhysicalAndCost(f,customer ? "14" : "16",customer ? "560" : "640"),
+                    () -> assertDecimal(customer ? "560" : "640",f.accountBalance("P_Asset_Acct"),"Late freight and partial returns reconcile to inventory"),
+                    () -> f.assertHistoricalUnchanged("M_CostDetail",history,february),
+                    () -> f.assertHistoricalUnchanged("Fact_Acct",facts,february));
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"4,-6,-180", "10,0,0", "20,10,300"})
+    public void testE07_CustomerReturnsCoverNegativeStock(String returned,String quantity,String value) {
+        try(Fixture f=new Fixture("E07")) {
+            Timestamp january=returnDay("-01-01"),february=returnDay("-02-01");
+            f.assertDocumentPreconditions(january);f.assertDocumentPreconditions(february);f.createProduct();f.useExistingPartner();
+            MInOutLine receipt=f.movement(false,"10","30",january);f.post(MInOut.Table_ID,receipt.getM_InOut_ID());
+            MInOutLine sale=f.movement(true,"20","50",returnDay("-01-02"));f.post(MInOut.Table_ID,sale.getM_InOut_ID());
+            int negativeAsi=DB.getSQLValueEx(f.name,"SELECT M_AttributeSetInstance_ID FROM M_Storage WHERE M_Product_ID=? AND QtyOnHand<0",f.productId);
+            assertTrue(negativeAsi>0);f.closePeriod(january);
+            List<List<String>> history=f.historicalRows("M_CostDetail",february),facts=f.historicalRows("Fact_Acct",february);
+            MInOutLine line=physicalReturn(f,true,sale,negativeAsi,returned,february);completeReturn(f,line);f.post(MInOut.Table_ID,line.getM_InOut_ID());
+            observeReturn(f,"E07:"+returned);
+            assertAll(() -> assertPhysicalAndCost(f,quantity,value),
+                    () -> assertDecimal(value,f.accountBalance("P_Asset_Acct"),"Returned units settle the provisional negative cost"),
+                    () -> f.assertHistoricalUnchanged("M_CostDetail",history,february),
+                    () -> f.assertHistoricalUnchanged("Fact_Acct",facts,february));
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"2,0,0", "4,-2,-60", "10,-8,-240"})
+    public void testE08_PartialVendorReturnCanCrossZero(String returned,String quantity,String value) {
+        try(Fixture f=new Fixture("E08")) {
+            Timestamp january=returnDay("-01-01"),february=returnDay("-02-01");
+            f.assertDocumentPreconditions(january);f.assertDocumentPreconditions(february);f.createProduct();f.useExistingPartner();
+            MInOutLine receipt=f.movement(false,"20","30",january);f.post(MInOut.Table_ID,receipt.getM_InOut_ID());
+            MInOutLine sale=f.movement(true,"18","50",returnDay("-01-02"));f.post(MInOut.Table_ID,sale.getM_InOut_ID());
+            f.closePeriod(january);List<List<String>> history=f.historicalRows("M_CostDetail",february),facts=f.historicalRows("Fact_Acct",february);
+            MInOutLine line=physicalReturn(f,false,receipt,receiptAsi(f,receipt),returned,february);completeReturn(f,line);f.post(MInOut.Table_ID,line.getM_InOut_ID());
+            observeReturn(f,"E08:"+returned);
+            assertAll(() -> assertPhysicalAndCost(f,quantity,value),
+                    () -> assertDecimal(value,f.accountBalance("P_Asset_Acct"),"Known cost remains valid below zero"),
+                    () -> f.assertHistoricalUnchanged("M_CostDetail",history,february),
+                    () -> f.assertHistoricalUnchanged("Fact_Acct",facts,february));
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true,true", "true,false", "false,true", "false,false"})
+    public void testE10_FreightReversalAfterPartialReturns(boolean customer,boolean returnFirst) {
+        try(Fixture f=new Fixture("E10")) {
+            Timestamp january=returnDay("-01-01"),february=returnDay("-02-01");
+            f.assertDocumentPreconditions(january);f.assertDocumentPreconditions(february);f.createProduct();f.useExistingPartner();
+            MInOutLine receipt=f.movement(false,"20","30",january),source=receipt;
+            f.post(MInOut.Table_ID,receipt.getM_InOut_ID());
+            if(customer){source=f.movement(true,"10","50",returnDay("-01-02"));f.post(MInOut.Table_ID,source.getM_InOut_ID());}
+            List<List<String>> history=f.historicalRows("M_CostDetail",february),facts=f.historicalRows("Fact_Acct",february);
+            f.closePeriod(january);
+            MInOutLine returnedLine=null;
+            if(returnFirst){returnedLine=physicalReturn(f,customer,source,receiptAsi(f,receipt),"4",february);completeReturn(f,returnedLine);f.post(MInOut.Table_ID,returnedLine.getM_InOut_ID());}
+            MInvoice freight=f.realLandedCostInvoice(receipt,"200",returnFirst ? returnDay("-02-02") : february);
+            f.post(MInvoice.Table_ID,freight.get_ID());
+            if(!returnFirst){returnedLine=physicalReturn(f,customer,source,receiptAsi(f,receipt),"4",returnDay("-02-02"));completeReturn(f,returnedLine);f.post(MInOut.Table_ID,returnedLine.getM_InOut_ID());}
+            assertTrue(freight.reverseCorrectIt(),freight.getProcessMsg());freight.saveEx();
+            f.post(MInvoice.Table_ID,freight.getReversal_ID());
+            MInOut returnHeader=new MInOut(f.ctx,returnedLine.getM_InOut_ID(),f.name);
+            System.out.println("RETURN_REPOST_REQUIRED=E10:"+customer+":"+returnFirst+"|returnPosted="+returnHeader.isPosted());
+            if(!returnHeader.isPosted())f.post(MInOut.Table_ID,returnHeader.get_ID());
+            observeReturn(f,"E10:"+customer+":"+returnFirst);
+            assertAll(() -> assertPhysicalAndCost(f,customer ? "14" : "16",customer ? "420" : "480"),
+                    () -> assertDecimal(customer ? "420" : "480",f.accountBalance("P_Asset_Acct"),"Freight reversal restores base unit cost for remaining/returned stock"),
+                    () -> f.assertHistoricalUnchanged("M_CostDetail",history,february),
+                    () -> f.assertHistoricalUnchanged("Fact_Acct",facts,february));
+        }
+    }
+
+
+    @Test
+    public void testE14_LateFreightAfterPartialReturnReversalAndReplacement() {
+        try(Fixture f=new Fixture("E14")) {
+            Timestamp january=returnDay("-01-01"),february=returnDay("-02-01");
+            f.assertDocumentPreconditions(january);f.assertDocumentPreconditions(february);f.createProduct();f.useExistingPartner();
+            MInOutLine receipt=f.movement(false,"20","30",january);f.post(MInOut.Table_ID,receipt.getM_InOut_ID());
+            MInOutLine sale=f.movement(true,"10","50",returnDay("-01-02"));f.post(MInOut.Table_ID,sale.getM_InOut_ID());
+            List<List<String>> history=f.historicalRows("M_CostDetail",february),facts=f.historicalRows("Fact_Acct",february);f.closePeriod(january);
+            MInOutLine first=physicalReturn(f,true,sale,receiptAsi(f,receipt),"4",february);completeReturn(f,first);f.post(MInOut.Table_ID,first.getM_InOut_ID());
+            MInOutLine second=physicalReturn(f,true,sale,receiptAsi(f,receipt),"6",returnDay("-02-02"));completeReturn(f,second);f.post(MInOut.Table_ID,second.getM_InOut_ID());
+            MInOut reversed=new MInOut(f.ctx,first.getM_InOut_ID(),f.name);assertTrue(reversed.reverseCorrectIt(),reversed.getProcessMsg());reversed.saveEx();
+            f.post(MInOut.Table_ID,reversed.getReversal_ID());f.post(MInOut.Table_ID,second.getM_InOut_ID());
+            MInOutLine replacement=physicalReturn(f,true,sale,receiptAsi(f,receipt),"4",returnDay("-02-03"));completeReturn(f,replacement);f.post(MInOut.Table_ID,replacement.getM_InOut_ID());
+            MInvoice freight=f.realLandedCostInvoice(receipt,"200",returnDay("-02-04"));f.post(MInvoice.Table_ID,freight.get_ID());
+            assertAll(() -> assertPhysicalAndCost(f,"20","800"),
+                    () -> assertDecimal("800",f.accountBalance("P_Asset_Acct"),"Only active returns restore the receipt contribution"),
+                    () -> assertDecimal("0",f.accountBalance("P_CostAdjustment_Acct"),"All original units are back in stock"),
+                    () -> f.assertHistoricalUnchanged("M_CostDetail",history,february),
+                    () -> f.assertHistoricalUnchanged("Fact_Acct",facts,february));
+        }
+    }
+
+    private static void postReturnInvoiceMatches(Fixture f, int invoiceId) {
+        for (MMatchInv match : new Query(f.ctx,MMatchInv.Table_Name,
+                "C_InvoiceLine_ID IN (SELECT C_InvoiceLine_ID FROM C_InvoiceLine WHERE C_Invoice_ID=?)",f.name)
+                .setParameters(invoiceId).list(MMatchInv.class)) {
+            f.post(MMatchInv.Table_ID,match.get_ID());
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"4,25", "4,35", "20,25", "20,35"})
+    public void testE11_VendorReturnCreditPriceAndReversal(String returned,String creditPrice) {
+        try(Fixture f=new Fixture("E11")) {
+            Timestamp january=returnDay("-01-01"),february=returnDay("-02-01");
+            f.assertDocumentPreconditions(january);f.assertDocumentPreconditions(february);f.createProduct();f.useExistingPartner();
+            MInOutLine receipt=f.movement(false,"20","30",january);f.post(MInOut.Table_ID,receipt.getM_InOut_ID());
+            MInvoice original=returnInvoice(f,false,false,receipt,"20","30",returnDay("-01-02"));
+            f.post(MInvoice.Table_ID,original.get_ID());postReturnInvoiceMatches(f,original.get_ID());
+            List<List<String>> history=f.historicalRows("M_CostDetail",february),facts=f.historicalRows("Fact_Acct",february);
+            f.closePeriod(january);
+            MInOutLine line=physicalReturn(f,false,receipt,receiptAsi(f,receipt),returned,february);
+            completeReturn(f,line);f.post(MInOut.Table_ID,line.getM_InOut_ID());
+            String quantity=new BigDecimal("20").subtract(new BigDecimal(returned)).toPlainString();
+            String value=new BigDecimal(quantity).multiply(new BigDecimal("30")).toPlainString();
+            MInvoice credit=returnInvoice(f,false,true,line,returned,creditPrice,returnDay("-02-02"));
+            f.post(MInvoice.Table_ID,credit.get_ID());postReturnInvoiceMatches(f,credit.get_ID());
+            BigDecimal variance=new BigDecimal("30").subtract(new BigDecimal(creditPrice)).multiply(new BigDecimal(returned));
+            assertAll(() -> assertPhysicalAndCost(f,quantity,value),
+                    () -> assertDecimal(value,f.accountBalance("P_Asset_Acct"),"Return credit price must not revalue remaining inventory"),
+                    () -> assertDecimal(variance.toPlainString(),f.accountBalance("P_CostAdjustment_Acct"),"Credit price difference belongs to adjustment"));
+            assertTrue(credit.reverseCorrectIt(),credit.getProcessMsg());credit.saveEx();
+            f.post(MInvoice.Table_ID,credit.getReversal_ID());postReturnInvoiceMatches(f,credit.getReversal_ID());
+            assertAll(() -> assertPhysicalAndCost(f,quantity,value),
+                    () -> assertDecimal(value,f.accountBalance("P_Asset_Acct"),"Reversing the credit leaves the physical return intact"),
+                    () -> assertDecimal("0",f.accountBalance("P_CostAdjustment_Acct"),"Reversal compensates the credit price variance"),
+                    () -> f.assertHistoricalUnchanged("M_CostDetail",history,february),
+                    () -> f.assertHistoricalUnchanged("Fact_Acct",facts,february));
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true", "false"})
+    public void testE12_ReturnRestoresOnlyItsShipmentReceiptShare(boolean mixedPool) {
+        try(Fixture f=new Fixture("E12")) {
+            Timestamp january=returnDay("-01-01"),february=returnDay("-02-01");
+            f.assertDocumentPreconditions(january);f.assertDocumentPreconditions(february);f.createProduct();f.useExistingPartner();
+            MInOutLine original=f.movement(false,"10","10",january);f.post(MInOut.Table_ID,original.getM_InOut_ID());
+            int asi=receiptAsi(f,original);
+            if(!mixedPool){MInOutLine exhausted=f.movement(true,"10","50",returnDay("-01-02"));f.post(MInOut.Table_ID,exhausted.getM_InOut_ID());}
+            MInOutLine replacement=f.draftMovement(false,"10","20",mixedPool ? returnDay("-01-02") : returnDay("-01-03"));
+            replacement.setM_AttributeSetInstance_ID(asi);replacement.saveEx();completeReturn(f,replacement);
+            f.post(MInOut.Table_ID,replacement.getM_InOut_ID());
+            MInOutLine sale=f.movement(true,mixedPool ? "10" : "4","50",mixedPool ? returnDay("-01-03") : returnDay("-01-04"));
+            f.post(MInOut.Table_ID,sale.getM_InOut_ID());
+            List<List<String>> history=f.historicalRows("M_CostDetail",february),facts=f.historicalRows("Fact_Acct",february);
+            f.closePeriod(january);
+            MInOutLine line=physicalReturn(f,true,sale,asi,mixedPool ? "4" : "2",february);
+            completeReturn(f,line);f.post(MInOut.Table_ID,line.getM_InOut_ID());
+            MInvoice freight=f.realLandedCostInvoice(original,"100",returnDay("-02-02"));f.post(MInvoice.Table_ID,freight.get_ID());
+            assertAll(() -> assertPhysicalAndCost(f,mixedPool ? "14" : "8",mixedPool ? "280" : "160"),
+                    () -> assertDecimal(mixedPool ? "280" : "160",f.accountBalance("P_Asset_Acct"),"Only the returned original contribution receives its freight"),
+                    () -> assertDecimal(mixedPool ? "30" : "100",f.accountBalance("P_CostAdjustment_Acct"),"Freight on the consumed contribution remains expense"),
+                    () -> f.assertHistoricalUnchanged("M_CostDetail",history,february),
+                    () -> f.assertHistoricalUnchanged("Fact_Acct",facts,february));
+        }
+    }
+
+    @Test
+    public void testE13_AmbiguousReturnRequiresExplicitShipmentBeforeFreight() throws Exception {
+        try(Fixture f=new Fixture("E13")) {
+            Timestamp january=returnDay("-01-01"),february=returnDay("-02-01");
+            f.assertDocumentPreconditions(january);f.assertDocumentPreconditions(february);f.createProduct();f.useExistingPartner();
+            MInOutLine receipt=f.movement(false,"20","30",january);f.post(MInOut.Table_ID,receipt.getM_InOut_ID());
+            MInOutLine first=f.draftMovement(true,"10","50",returnDay("-01-02"));
+            first.setMovementQty(new BigDecimal("4"));first.saveEx();completeReturn(f,first);f.post(MInOut.Table_ID,first.getM_InOut_ID());
+            MInOutLine second=f.draftMovement(true,"6","50",returnDay("-01-03"));
+            MInOut secondHeader=second.getParent();secondHeader.setC_Order_ID(first.getParent().getC_Order_ID());secondHeader.saveEx();
+            second.setC_OrderLine_ID(first.getC_OrderLine_ID());second.saveEx();completeReturn(f,second);f.post(MInOut.Table_ID,second.getM_InOut_ID());
+            List<List<String>> history=f.historicalRows("M_CostDetail",february),facts=f.historicalRows("Fact_Acct",february);
+            f.closePeriod(january);
+            MInOutLine returned=physicalReturn(f,true,first,receiptAsi(f,receipt),"4",february);
+            completeReturn(f,returned);f.post(MInOut.Table_ID,returned.getM_InOut_ID());
+            java.sql.Savepoint beforeFreight=f.transaction.getConnection().setSavepoint();
+            Throwable failure=assertThrows(Throwable.class,() -> f.realLandedCostInvoice(receipt,"200",returnDay("-02-02")));
+            boolean identified=false;
+            for(Throwable error=failure;error!=null;error=error.getCause()) {
+                if(error.getMessage()!=null && error.getMessage().contains("Ambiguous landed-cost return requires an RMA shipment link"))identified=true;
+            }
+            assertTrue(identified,"Expected an explicit ambiguous-return rejection: "+failure);
+            f.transaction.getConnection().rollback(beforeFreight);
+            assertPhysicalAndCost(f,"14","420");
+            f.assertHistoricalUnchanged("M_CostDetail",history,february);f.assertHistoricalUnchanged("Fact_Acct",facts,february);
+        }
+    }
+
+
+    /** Explicitly selected suite: commits fixtures only on a dedicated concurrency clone. */
+    public static class ConcurrencyTests {
+        @BeforeAll
+        public static void initializeConcurrency() {
+            assertEquals("true", System.getProperty("adempiere.costtest.concurrency.enabled"),
+                    "Concurrency fixtures commit: explicit opt-in is required");
+            assertTrue(DatabaseIdentity.configured().database.startsWith("adempiere_4411_concurrency_"),
+                    "Concurrency fixtures require their own disposable database");
+            initialize();
+        }
+
+        private static final class Job {
+            final Properties ctx = new Properties();
+            final int product, allocation, movement, element;
+            Job(Fixture f, MInOutLine receipt, MLandedCostAllocation event) {
+                ctx.putAll(f.ctx); product=f.productId; allocation=event.get_ID(); element=f.material.get_ID();
+                movement=new Query(f.ctx,MTransaction.Table_Name,"M_InOutLine_ID=?",f.name)
+                        .setParameters(receipt.get_ID()).firstOnly().get_ID();
+            }
+        }
+
+        private static java.util.concurrent.Future<?> start(java.util.concurrent.ExecutorService pool,
+                Job job, java.util.concurrent.atomic.AtomicInteger pid) {
+            return start(pool, job, pid, false);
+        }
+        private static java.util.concurrent.Future<?> start(java.util.concurrent.ExecutorService pool,
+                Job job, java.util.concurrent.atomic.AtomicInteger pid, boolean regenerate) {
+            return pool.submit(() -> {
+                String name=Trx.createTrxName("4411-concurrent"); Trx tx=Trx.get(name,true);
+                try {
+                    DatabaseIdentity.configured().verify(tx.getConnection());
+                    assertEquals(Connection.TRANSACTION_READ_COMMITTED,tx.getConnection().getTransactionIsolation());
+                    DB.executeUpdateEx("SET LOCAL lock_timeout='5s'",name);
+                    DB.executeUpdateEx("SET LOCAL statement_timeout='15s'",name);
+                    pid.set(DB.getSQLValueEx(name,"SELECT pg_backend_pid()"));
+                    MAcctSchema schema=new MAcctSchema(job.ctx,SCHEMA_ID,name);
+                    if (regenerate) {
+                        GenerateCostDetail process=new GenerateCostDetail() {
+                        {
+                        setAcctSchemaId(SCHEMA_ID);setCostTypeId(schema.getM_CostType_ID());
+                        setCostElementId(job.element);setProductId(job.product);
+                        setDateAcct(Timestamp.valueOf(TEST_YEAR+"-02-01 00:00:00"));
+                        setDateAcctTo(Timestamp.valueOf(TEST_YEAR+"-02-28 00:00:00"));
+                        }
+                            @Override public Properties getCtx(){return job.ctx;}
+                            @Override public String get_TrxName(){return name;}
+                            @Override protected int getAD_Client_ID(){return CLIENT_ID;}
+                        };
+                        process.generateCostDetail();
+                    } else {
+                    CostEngineFactory.getCostEngine(CLIENT_ID).createCostDetail(schema,
+                            (MCostType)schema.getM_CostType(),new MCostElement(job.ctx,job.element,name),
+                            new MTransaction(job.ctx,job.movement,name),
+                            new MLandedCostAllocation(job.ctx,job.allocation,name),true);
+                    }
+                    assertTrue(tx.commit(true),"Concurrent operation must commit successfully");
+                } catch (Exception e) {throw new IllegalStateException(e);}
+                finally {Fixture.rollbackAndClose(tx);}
+            });
+        }
+
+        private static Trx hold(Job job) throws Exception {
+            String name=Trx.createTrxName("4411-cost-lock-holder");Trx tx=Trx.get(name,true);
+            DatabaseIdentity.configured().verify(tx.getConnection());
+                    assertEquals(Connection.TRANSACTION_READ_COMMITTED,tx.getConnection().getTransactionIsolation());
+            DB.executeUpdateEx("SET LOCAL lock_timeout='5s'",name);
+            try(java.sql.PreparedStatement s=tx.getConnection().prepareStatement(
+                    "SELECT M_Product_ID FROM M_Cost WHERE M_Product_ID=? FOR UPDATE")) {
+                s.setInt(1,job.product);try(java.sql.ResultSet r=s.executeQuery()){assertTrue(r.next());}
+            }
+            return tx;
+        }
+
+        private static void awaitBlocked(java.util.concurrent.atomic.AtomicInteger... pids) throws Exception {
+            long deadline=System.nanoTime()+java.util.concurrent.TimeUnit.SECONDS.toNanos(4);
+            while(System.nanoTime()<deadline) {
+                boolean all=true;
+                try(Connection c=DB.getConnectionRW()) {
+                    DatabaseIdentity.configured().verify(c);
+                    for(java.util.concurrent.atomic.AtomicInteger pid:pids) {
+                        if(pid.get()==0){all=false;continue;}
+                        try(java.sql.PreparedStatement s=c.prepareStatement("SELECT cardinality(pg_blocking_pids(?))")) {
+                            s.setInt(1,pid.get());try(java.sql.ResultSet r=s.executeQuery()){r.next();all &= r.getInt(1)>0;}
+                        }
+                    }
+                }
+                if(all)return;
+                Thread.sleep(20);
+            }
+            fail("Workers did not reach the deliberately held database row within four seconds");
+        }
+
+        private static Job prepare(Fixture f,String suffix,String amount) {
+            Timestamp jan=Timestamp.valueOf(TEST_YEAR+"-01-01 00:00:00");
+            Timestamp feb=Timestamp.valueOf(TEST_YEAR+"-02-01 00:00:00");
+            f.assertDocumentPreconditions(jan); f.assertDocumentPreconditions(feb);
+            f.createProduct(suffix);if(!f.ownsPartner)f.createPartner();
+            MInOutLine receipt=f.movement(false,"20","30",jan);
+            f.movement(true,"10","50",Timestamp.valueOf(TEST_YEAR+"-01-02 00:00:00"));
+            return new Job(f,receipt,f.pendingLandedCost(receipt,amount,feb));
+        }
+
+        @Test
+        public void sameEventHasOneDetail() throws Exception { race(true); }
+        @Test
+        public void differentEventsPreserveBothAmounts() throws Exception { race(false); }
+        @Test
+        public void immediateAndRegenerationShareOneEvent() throws Exception {race(true,false,true);}
+        @Test
+        public void twoRegenerationsShareOneEvent() throws Exception {race(true,true,true);}
+        private void race(boolean same) throws Exception {race(same,false,false);}
+        private void race(boolean same,boolean regenerateFirst,boolean regenerateSecond) throws Exception {
+            Fixture f=new Fixture("CONCURRENT");
+            java.util.concurrent.ExecutorService pool=java.util.concurrent.Executors.newFixedThreadPool(2);
+            Trx holder=null;
+            try {
+                Job a=prepare(f,"","200");Job b=a;
+                if(!same) {
+                    MInOutLine receipt=new MInOutLine(f.ctx,
+                            new MTransaction(f.ctx,a.movement,f.name).getM_InOutLine_ID(),f.name);
+                    b=new Job(f,receipt,f.pendingLandedCost(receipt,"100",Timestamp.valueOf(TEST_YEAR+"-02-02 00:00:00")));
+                }
+                assertTrue(f.transaction.commit(true)); holder=hold(a);
+                java.util.concurrent.atomic.AtomicInteger pa=new java.util.concurrent.atomic.AtomicInteger();
+                java.util.concurrent.atomic.AtomicInteger pb=new java.util.concurrent.atomic.AtomicInteger();
+                long started=System.nanoTime();
+                java.util.concurrent.Future<?> one=start(pool,a,pa,regenerateFirst),two=start(pool,b,pb,regenerateSecond);
+                awaitBlocked(pa,pb);Fixture.rollbackAndClose(holder);holder=null;
+                one.get(20,java.util.concurrent.TimeUnit.SECONDS);two.get(20,java.util.concurrent.TimeUnit.SECONDS);
+                int count=DB.getSQLValueEx(f.name,"SELECT COUNT(*) FROM M_CostDetail WHERE M_Product_ID=? AND C_LandedCostAllocation_ID IS NOT NULL",a.product);
+                System.out.println("CONCURRENCY same="+same+" regenerate="+regenerateFirst+":"+regenerateSecond+" detailCount="+count+" elapsedMs="+(System.nanoTime()-started)/1000000);
+                assertEquals(same?1:2,count,"Concurrent costing must not duplicate an allocation");
+                f.assertCostState("10",same?"400":"450",same?"40":"45");
+                BigDecimal amount=DB.getSQLValueBDEx(f.name,"SELECT SUM(Amt+AmtLL) FROM M_CostDetail WHERE M_Product_ID=? AND C_LandedCostAllocation_ID IS NOT NULL",a.product);
+                assertDecimal(same?"100":"150",amount,"Both event contributions must survive exactly once");
+            } finally {
+                if(holder!=null)Fixture.rollbackAndClose(holder);pool.shutdownNow();
+                assertTrue(pool.awaitTermination(25,java.util.concurrent.TimeUnit.SECONDS));
+                Fixture.rollbackAndClose(f.transaction);f.restoreContext();
+            }
+        }
+
+        @ParameterizedTest
+        @CsvSource({"true,false", "false,false", "true,true", "false,true"})
+        public void physicalMovementAndFreightKeepTheSameInventory(boolean sales, boolean movementFirst) throws Exception {
+            Fixture f=new Fixture("CONCURRENT-PHYSICAL");
+            java.util.concurrent.ExecutorService pool=java.util.concurrent.Executors.newFixedThreadPool(2);
+            Trx holder=null;
+            try {
+                Job a=prepare(f,"","200");
+                MInOutLine draft=f.draftMovement(sales,"4","50",Timestamp.valueOf(TEST_YEAR+"-02-02 00:00:00"));
+                int documentId=draft.getM_InOut_ID();
+                assertTrue(f.transaction.commit(true));holder=hold(a);
+                java.util.concurrent.atomic.AtomicInteger pa=new java.util.concurrent.atomic.AtomicInteger();
+                java.util.concurrent.atomic.AtomicInteger pb=new java.util.concurrent.atomic.AtomicInteger();
+                java.util.concurrent.Future<?> one=movementFirst?null:start(pool,a,pa);
+                java.util.concurrent.Future<?> two=pool.submit(() -> {
+                    String name=Trx.createTrxName("4411-concurrent-movement");Trx tx=Trx.get(name,true);
+                    try {
+                        DatabaseIdentity.configured().verify(tx.getConnection());
+                    assertEquals(Connection.TRANSACTION_READ_COMMITTED,tx.getConnection().getTransactionIsolation());
+                        DB.executeUpdateEx("SET LOCAL lock_timeout='5s'",name);
+                        DB.executeUpdateEx("SET LOCAL statement_timeout='15s'",name);
+                        pb.set(DB.getSQLValueEx(name,"SELECT pg_backend_pid()"));
+                        MInOut document=new MInOut(a.ctx,documentId,name);
+                        assertTrue(document.processIt(DocAction.ACTION_Complete),document.getProcessMsg());
+                        document.saveEx();assertTrue(tx.commit(true));
+                    } catch(Exception e){throw new IllegalStateException(e);}
+                    finally{Fixture.rollbackAndClose(tx);}
+                });
+                if(movementFirst){awaitBlocked(pb);one=start(pool,a,pa);}
+                awaitBlocked(pa,pb);Fixture.rollbackAndClose(holder);holder=null;
+                one.get(20,java.util.concurrent.TimeUnit.SECONDS);two.get(20,java.util.concurrent.TimeUnit.SECONDS);
+                f.assertCostState(sales?"6":"14",sales?"240":"600",sales?"40":"42.8571");
+                assertEquals(1,DB.getSQLValueEx(f.name,"SELECT COUNT(*) FROM M_CostDetail WHERE M_Product_ID=? AND C_LandedCostAllocation_ID IS NOT NULL",a.product));
+                System.out.println("CONCURRENCY physical sales="+sales+" movementFirst="+movementFirst+" and freight retained correct quantity/value");
+            } finally {
+                if(holder!=null)Fixture.rollbackAndClose(holder);pool.shutdownNow();
+                assertTrue(pool.awaitTermination(25,java.util.concurrent.TimeUnit.SECONDS));
+                Fixture.rollbackAndClose(f.transaction);f.restoreContext();
+            }
+        }
+
+        @Test
+        public void lockTimeoutRollsBackWithoutCostWrites() throws Exception {
+            Fixture f=new Fixture("CONCURRENT-TIMEOUT");
+            java.util.concurrent.ExecutorService pool=java.util.concurrent.Executors.newFixedThreadPool(1);
+            Trx holder=null;
+            try {
+                Job a=prepare(f,"","200");assertTrue(f.transaction.commit(true));holder=hold(a);
+                java.util.concurrent.atomic.AtomicInteger pid=new java.util.concurrent.atomic.AtomicInteger();
+                long started=System.nanoTime();java.util.concurrent.Future<?> result=start(pool,a,pid);awaitBlocked(pid);
+                java.util.concurrent.ExecutionException failure=assertThrows(java.util.concurrent.ExecutionException.class,
+                        () -> result.get(9,java.util.concurrent.TimeUnit.SECONDS));
+                Throwable cause=failure;boolean timedOut=false;
+                while(cause!=null){if(cause instanceof SQLException && "55P03".equals(((SQLException)cause).getSQLState()))timedOut=true;cause=cause.getCause();}
+                assertTrue(timedOut,"The bounded wait must fail with PostgreSQL lock_not_available");
+                assertTrue(System.nanoTime()-started<java.util.concurrent.TimeUnit.SECONDS.toNanos(9));
+                Fixture.rollbackAndClose(holder);holder=null;
+                assertEquals(0,DB.getSQLValueEx(f.name,"SELECT COUNT(*) FROM M_CostDetail WHERE M_Product_ID=? AND C_LandedCostAllocation_ID IS NOT NULL",a.product));
+                f.assertCostState("10","300","30");
+                start(pool,a,new java.util.concurrent.atomic.AtomicInteger()).get(15,java.util.concurrent.TimeUnit.SECONDS);
+                f.assertCostState("10","400","40");
+                System.out.println("CONCURRENCY timeout: bounded rejection, no partial cost, retry succeeded");
+            } finally {
+                if(holder!=null)Fixture.rollbackAndClose(holder);pool.shutdownNow();
+                assertTrue(pool.awaitTermination(25,java.util.concurrent.TimeUnit.SECONDS));
+                Fixture.rollbackAndClose(f.transaction);f.restoreContext();
+            }
+        }
+
+        @Test
+        public void differentProductsProceedIndependently() throws Exception {
+            Fixture f=new Fixture("CONCURRENT-INDEPENDENT");
+            java.util.concurrent.ExecutorService pool=java.util.concurrent.Executors.newFixedThreadPool(2);
+            Trx holder=null;
+            try {
+                Job a=prepare(f,"-a","200"),b=prepare(f,"-b","100");
+                assertTrue(f.transaction.commit(true));holder=hold(a);
+                java.util.concurrent.atomic.AtomicInteger pa=new java.util.concurrent.atomic.AtomicInteger();
+                java.util.concurrent.atomic.AtomicInteger pb=new java.util.concurrent.atomic.AtomicInteger();
+                java.util.concurrent.Future<?> one=start(pool,a,pa);awaitBlocked(pa);
+                java.util.concurrent.Future<?> two=start(pool,b,pb);
+                two.get(4,java.util.concurrent.TimeUnit.SECONDS);
+                assertFalse(one.isDone(),"Product A must still be waiting for its own row");
+                f.assertCostState("10","350","35");
+                Fixture.rollbackAndClose(holder);holder=null;one.get(20,java.util.concurrent.TimeUnit.SECONDS);
+                f.productId=a.product; f.assertCostState("10","400","40");
+                System.out.println("CONCURRENCY distinct products: B committed while A was blocked");
+            } finally {
+                if(holder!=null)Fixture.rollbackAndClose(holder);pool.shutdownNow();
+                assertTrue(pool.awaitTermination(25,java.util.concurrent.TimeUnit.SECONDS));
+                Fixture.rollbackAndClose(f.transaction);f.restoreContext();
+            }
+        }
+    }
+
     @Test
     public void test01_NegativeInventory_ReplenishHigherCost_AfterClosedPeriod() {
         try (Fixture f = new Fixture("TEST01")) {
@@ -1898,7 +2635,7 @@ public class NegativeInventoryCostAdjustmentTest implements IntegrationTestTag {
                 // Full rows, including audit columns, detect unintended out-of-transaction writes.
                 for (String table : new String[] {"C_BPartner", "M_Cost", "C_DocType",
                         "C_AcctSchema", "M_Warehouse", "M_Locator", "M_PriceList",
-                        "M_Product", "C_Period", "C_PeriodControl", "C_Tax", "M_Product_Category", "M_Product_Category_Acct"}) {
+                        "M_Product", "C_Period", "C_PeriodControl", "C_Tax", "M_Product_Category", "M_Product_Category_Acct", "M_InOutConfirm", "M_InOutLineConfirm"}) {
                     sharedBefore.put(table, snapshot(table, name));
                 }
             } catch (SQLException | RuntimeException | Error failure) {

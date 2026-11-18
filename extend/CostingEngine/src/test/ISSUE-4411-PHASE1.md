@@ -10,7 +10,7 @@ a bounded, caller-transaction contract described below. Use Java 11 and a fresh 
 Back up and verify the source seed before cloning. Do not run against a shared
 or production database. On the clone, configure schema 101 for manual period
 control; January and February of the configured test year must be open. Disable counter creation for
-the selected document types (120, 122, 123, 124, 126, 132 in the tested seed). Set
+the selected document types (116, 118, 120, 122, 123, 124, 126, 132, 149, 151 in the tested seed). Set
 client 11 CLIENT_ACCOUNTING to Q so the tests explicitly post documents.
 Require exactly one active Material cost element. The tested seed had duplicate
 Material elements 100 and 1000000; only the duplicate 1000000 was deactivated
@@ -73,7 +73,8 @@ defaults to TEST03. It requires the same explicit configuration.
 
 ## Coverage
 
-There are 86 identity validation cases and 65 integration invocations:
+There are 86 identity validation cases and 111 integration invocations (197 total),
+plus 10 explicitly selected concurrency invocations on a separate clone:
 
 | Case | Behavior checked |
 | --- | --- |
@@ -206,8 +207,12 @@ contribution through full/partial consumption before replacement, including a
 replacement that explicitly reuses the same ASI. Later receipts do not restore
 an exhausted contribution. Issues consume it proportionally within the ASI pool;
 client-level transfers are excluded from consumption. This adds historical reads
-per later issue; large-history performance has not been measured. Other mixed
-receipt/return and invoice-price/landed-cost cascades require dedicated work.
+per later issue; large-history performance has not been measured. Customer returns restore only the traced share of their identified shipment.
+An RMA line identifies that shipment explicitly; without one, an order line must
+identify exactly one traced shipment in the same ASI. Ambiguous/untraced sources
+and excess returns are rejected before the allocation detail is written. Return
+reversals remove their restored share and release the active returned quantity.
+Other invoice-price/landed-cost cascades require dedicated work.
 
 A zero-quantity cost detail links to C_LandedCostAllocation, receipt and invoice
 line. The allocation total is converted to schema currency before splitting
@@ -234,6 +239,87 @@ All current financial fixtures use GardenWorld USD. Chile, New Zealand, Mexico,
 Colombia and Argentina are planned validation jurisdictions, not certified tax
 localizations or currency test results in this suite.
 
+## Return, credit and freight regressions
+
+E01-E14 add 46 invocations to the original 65 integration invocations:
+
+| Group | Variants | Behavior checked |
+| --- | ---: | --- |
+| E01 | 8 | Customer/vendor partial and full returns; original period open/closed |
+| E02 | 4 | Physical return reversal |
+| E03 | 2 | Two partial returns, reverse the first, repost the open successor |
+| E04 | 2 | Reject a return in a closed period without cost writes |
+| E05 | 4 | Reject replay through a closed later return; history unchanged |
+| E06 | 4 | Freight before/after partial customer/vendor returns |
+| E07 | 3 | Customer returns cover negative stock partially, exactly and beyond |
+| E08 | 3 | Vendor returns exhaust stock or cross into negative stock |
+| E09 | 4 | Partial/full customer/vendor credit memos at the original price |
+| E10 | 4 | Freight reversal after partial returns; repost open successors |
+| E11 | 4 | Vendor credit price above/below receipt cost and credit reversal |
+| E12 | 2 | Mixed receipts and returns from a different receipt contribution |
+| E13 | 1 | Ambiguous shipment source rejected explicitly |
+| E14 | 1 | Multiple partial returns, reversal and replacement before freight |
+
+Physical vendor returns already remove inventory. Average Invoice invoice matches
+for those returns do not create a second inventory cost event. Existing MatchInv
+posting handles the credit price difference; E11 checks its amount/sign and reversal.
+Replayed customer return detail amounts are refreshed together with the inventory
+value so reposting uses the corrected amount. Open successor documents may need
+reposting; closed successors are rejected. Return confirmations are actually
+completed where required, rather than disabling confirmation rules. These cases
+link the source order line/ASI; they do not certify the complete RMA workflow.
+
+## Explicit concurrency suite
+
+The static nested class `NegativeInventoryCostAdjustmentTest$ConcurrencyTests`
+is selected separately. It commits fixtures and therefore refuses to run unless
+`adempiere.costtest.concurrency.enabled=true` and the verified database name starts
+with `adempiere_4411_concurrency_`. Use an independently restored, exclusively owned
+clone and the same five exact database identity properties. These extra checks do
+not replace server-enforced least privilege and the runtime boundary. The suite
+requires READ COMMITTED and creates its own products and business partners. Keep
+this clone disposable: committed fixtures remain available for diagnosis.
+
+Select the nested class explicitly with JUnit ConsoleLauncher, keeping the shell
+quotes around the dollar sign:
+
+```sh
+java -Dadempiere.costtest.concurrency.enabled=true \
+  [same verified profile, identity, runtime policy and compiled classpath] \
+  org.junit.platform.console.ConsoleLauncher \
+  --select-class='org.adempiere.NegativeInventoryCostAdjustmentTest$ConcurrencyTests'
+```
+
+The bracketed arguments above describe required configuration, not literal shell
+arguments. The regular Ant integration target continues to select the sequential
+suite; do not enable concurrency by running every class against the rollback clone.
+
+The ten invocations check simultaneous duplicate allocation calls, different
+allocations for one product, immediate costing versus regeneration, two concurrent
+regenerations, a different product completing while another waits, bounded lock
+timeout with rollback/retry, and freight versus a sale/receipt with both waiter
+orders (four variants). Each uses independent PostgreSQL transactions, holds an
+M_Cost row deliberately, and observes `pg_blocking_pids` before releasing it.
+Futures have deadlines; test transactions use lock_timeout=5s and
+statement_timeout=15s. A timeout must leave no allocation detail or partial cost,
+and a retry after release must succeed.
+
+Average Invoice landed costing now locks its exact M_Cost dimension and reloads it
+before event lookup/basis calculation. This closes the reproduced duplicate-event
+race and cooperates with the ordered locks in independent landed-cost regeneration.
+The lock is held until the caller commits/rolls back and requires a caller
+transaction. It is not a process-wide mutex; other products can proceed.
+
+These tests are not a load benchmark or a universal no-deadlock guarantee.
+Opposite lock orders across multi-product documents, physical regeneration ranges,
+custom validators and longer production histories need separate workload tests.
+PostgreSQL may resolve deadlocks by rejecting a transaction; the caller must roll
+back and retry the whole business operation. The test timeouts are local to the
+test transactions: this patch does not set production PostgreSQL timeout policy.
+The inspected local connection had lock_timeout=0 and statement_timeout=0;
+a real blocker can therefore wait indefinitely unless the application/session
+configures a limit. Do not interpret the successful bounded tests as such a limit.
+
 ## Boundaries requiring further work
 
 - GenerateCostDetail now requires a bounded date range and an existing caller
@@ -248,7 +334,7 @@ localizations or currency test results in this suite.
   TEST42 additionally exercises the public SvrProcess/MPInstance entry point.
   The separate legacy AverageInvoiceCostTest imports the retired
   org.eevolution.process.GenerateCostDetail class, which is absent from this
-  checkout/runtime. It is not included in the 151-invocation result and was not
+  checkout/runtime. It is not included in the 197-invocation sequential result and was not
   modified as part of this change; its broader modernization is separate work.
 - A successor in a closed period now rejects immediate replay before sequence
   renumbering/Processing changes. The caller must roll back the triggering
@@ -281,7 +367,7 @@ localizations or currency test results in this suite.
 ## Final local verification
 
 The final pass compiles the changed production sources and tests into an isolated
-output directory, then runs all 151 JUnit invocations against a restored copy of
+output directory, then runs all 197 sequential JUnit invocations against a restored copy of
 local `adempiere`. The test login has no UPDATE permission on working-database
 M_Cost and no INSERT permission on working-database M_Storage. A restrictive Java
 policy separately denies host writes, private/environment credential reads,

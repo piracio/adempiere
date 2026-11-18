@@ -323,6 +323,13 @@ public class CostEngine {
 
 		if (!force)
 			return;
+        // The physical vendor return already removed inventory. Its invoice match
+        // settles the credit; any price difference belongs to MatchInv accounting.
+        if (model instanceof MMatchInv
+                && MCostType.COSTINGMETHOD_AverageInvoice.equals(costType.getCostingMethod())
+                && MTransaction.MOVEMENTTYPE_VendorReturns.equals(transaction.getMovementType()))
+            return;
+
             if (model instanceof MInOutLine
                     && MCostType.COSTINGMETHOD_AverageInvoice.equals(costType.getCostingMethod())) {
                 MDocType documentType = MDocType.get(model.getCtx(), model.getC_DocType_ID());
@@ -372,9 +379,29 @@ public class CostEngine {
                     : allocation.getPriceActual();
 		}
 
+        if (model instanceof MLandedCostAllocation
+                && MCostType.COSTINGMETHOD_AverageInvoice.equals(costType.getCostingMethod())
+                && transaction.get_TrxName() == null)
+            throw new IllegalStateException("Landed-cost serialization requires a caller transaction");
+
 		MCost cost = MCost.validateCostForCostType(accountSchema, costType, costElement,
 				transaction.getM_Product_ID(), transaction.getAD_Org_ID(), transaction.getM_Warehouse_ID(),
 				transaction.getM_AttributeSetInstance_ID(), transaction.get_TrxName());
+
+        if (model instanceof MLandedCostAllocation
+                && MCostType.COSTINGMETHOD_AverageInvoice.equals(costType.getCostingMethod())) {
+            // Serialize this dimension before looking up the allocation detail or
+            // calculating its basis. Reload after waiting for another transaction.
+            DB.getSQLValueEx(transaction.get_TrxName(),
+                    "SELECT M_Product_ID FROM M_Cost WHERE AD_Client_ID=? AND M_Product_ID=?"
+                    + " AND C_AcctSchema_ID=? AND M_CostType_ID=? AND M_CostElement_ID=?"
+                    + " AND AD_Org_ID=? AND M_Warehouse_ID=? AND M_AttributeSetInstance_ID=? FOR UPDATE",
+                    cost.getAD_Client_ID(), cost.getM_Product_ID(), cost.getC_AcctSchema_ID(),
+                    cost.getM_CostType_ID(), cost.getM_CostElement_ID(), cost.getAD_Org_ID(),
+                    cost.getM_Warehouse_ID(), cost.getM_AttributeSetInstance_ID());
+            if (!cost.load(transaction.get_TrxName()))
+                throw new IllegalStateException("Missing locked landed-cost dimension");
+        }
 
 		// get the cost for positive transaction
 		if ((MCostElement.COSTELEMENTTYPE_Material.equals(costElement
